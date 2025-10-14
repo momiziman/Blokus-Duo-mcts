@@ -37,8 +37,8 @@ class Player():
 
     def select_block(self, board, players):
         if self.computer:
-            import MCTS
-            self.use_block = MCTS.choose_move(self, board, players, players.index(self))
+            import MCTScopy
+            self.use_block = MCTScopy.choose_move(self, board, players, players.index(self))
             if self.use_block is None:
                 self.selected_shape_index = None
                 self.selected_direction_index = None
