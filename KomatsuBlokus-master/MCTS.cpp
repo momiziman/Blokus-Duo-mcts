@@ -7,6 +7,8 @@
 #include <random>
 #include <string>
 #include <vector>
+#include "Player.py"
+#include "Board.py"
 
 using std::array, std::vector;
 using std::cout, std::endl, std::cin;
@@ -67,6 +69,21 @@ public:
     // 現在のターン
     int t_ = 0;
     State() {}
+
+    int make_baord()
+    {
+        int board[16][16];
+        for (int i = 0; i < 2; i++)
+        {
+            for (int j = 0; j < 16; j++)
+            {
+                board[i][j] = 1;
+                board[j][i] = 1;
+                board[15 - i][j] = 1;
+                board[j][15 - i] = 1;
+            }
+        }
+    }
 
     // ゲームが終了したか判定する
     bool isDone() const
