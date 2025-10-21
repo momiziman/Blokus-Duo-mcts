@@ -5,5 +5,6 @@ import os
 dll_path = os.path.abspath("hello.dll")
 print("Loading:", dll_path)
 
-lib = ctypes.CDLL(dll_path)
+lib = ctypes.cdll.LoadLibrary(dll_path)
 lib.hello()
+

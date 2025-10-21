@@ -20,4 +20,13 @@ extern "C"
             printf("%d", board[i]);
         }
     }
+
+    bool copy(const double *from, double *to, int n)
+    {
+        for (int i = 0; i < n; i++)
+        {
+            to[i] = from[i];
+        }
+        return true;
+    }
 }
