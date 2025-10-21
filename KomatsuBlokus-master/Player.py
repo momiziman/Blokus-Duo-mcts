@@ -41,7 +41,7 @@ class Player():
             import MCTScopy
             self.use_block = MCTScopy.choose_move(self, board, players, players.index(self))
 
-
+            #MCTS.cpp より def ___(board,players,Block.block_table)
 
             if self.use_block is None:
                 self.selected_shape_index = None
