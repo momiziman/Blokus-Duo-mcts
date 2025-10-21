@@ -40,6 +40,9 @@ class Player():
         if self.computer:
             import MCTScopy
             self.use_block = MCTScopy.choose_move(self, board, players, players.index(self))
+
+
+
             if self.use_block is None:
                 self.selected_shape_index = None
                 self.selected_direction_index = None

@@ -1,4 +1,3 @@
-#include <Python.h>
 #include <algorithm>
 #include <array>
 #include <chrono>
@@ -7,8 +6,6 @@
 #include <random>
 #include <string>
 #include <vector>
-#include "Player.py"
-#include "Board.py"
 
 using std::array, std::vector;
 using std::cout, std::endl, std::cin;
@@ -70,7 +67,7 @@ public:
     int t_ = 0;
     State() {}
 
-    int make_baord()
+    int make_board()
     {
         int board[16][16];
         for (int i = 0; i < 2; i++)
@@ -83,6 +80,10 @@ public:
                 board[j][15 - i] = 1;
             }
         }
+    }
+
+    int legal_moves(int board)
+    {
     }
 
     // ゲームが終了したか判定する
