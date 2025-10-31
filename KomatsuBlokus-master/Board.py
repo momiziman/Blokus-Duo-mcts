@@ -41,6 +41,9 @@ class Board():
         boards = np.asarray(boards)
         return boards
 
+    def py_to_cpp(board):
+        return
+
     def check_status(self, game):
         # テスト用に残しておく
         # print('')

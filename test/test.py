@@ -2,7 +2,6 @@ import ctypes
 import numpy as np
 import os
 
-# DLLの絶対パスを指定（MinGWだと相対パスがうまく通らない場合があります）
 dll_path = os.path.abspath("test.dll")
 test = ctypes.cdll.LoadLibrary(dll_path)
 
@@ -17,3 +16,4 @@ copy1d(arr1.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),arr2.ctypes.data_as(
 for i in range(len(arr1)):
     print('arr1[{0:d}]={1:f} arr2[{0:d}]={2:f}'.format(i,arr1[i],arr2[i]))
 
+test.printboard(arr1,len(arr1))
