@@ -25,13 +25,20 @@ using std::pair;
 using std::swap;
 
 constexpr int TILE_NUMBER = 14;
+constexpr int COLOR_NUM = 2;
 constexpr int BOARD_SIZE = TILE_NUMBER + 2; // 壁を含めたサイズ
 
 enum TileState
 {
-    EMPTY = 0,
+    BLANK = 0,
     CANTSET = -1,
     ABLESET = 1
+};
+
+enum class Color
+{
+    PLAYER1 = 0,
+    PLAYER2 = 1
 };
 
 struct Position
@@ -236,6 +243,133 @@ struct Player
     vector<int> used_blocks;
     vector<tuple<int, int, vector<pair<int, int>>>> usable_blocks;
     // (block_id, direction, settable_positions)
+};
+
+class Board
+{
+public:
+    // 各プレイヤーの盤面状態（status[color][y][x]）
+    array<vector<vector<int>>, COLOR_NUM> status;
+
+    Board()
+    {
+        for (int i = 0; i < COLOR_NUM; ++i)
+        {
+            status[i].resize(TILE_NUMBER + 2, vector<int>(TILE_NUMBER + 2, BLANK));
+        }
+    }
+
+    //--------------------------------------
+    // ブロックが配置可能か確認
+    //--------------------------------------
+    bool settable_check(Color color, const vector<vector<int>> &block_shape, int x, int y)
+    {
+        int color_idx = static_cast<int>(color);
+
+        // 1つでもCANTSETがあれば置けない
+        for (int i = 0; i < (int)block_shape.size(); ++i)
+        {
+            for (int j = 0; j < (int)block_shape[i].size(); ++j)
+            {
+                if (block_shape[i][j] == CANTSET)
+                {
+                    if (status[color_idx][y + i - 2][x + j - 2] == CANTSET)
+                        return false;
+                }
+            }
+        }
+
+        // 1つでもABLESETがあれば置ける
+        for (int i = 0; i < (int)block_shape.size(); ++i)
+        {
+            for (int j = 0; j < (int)block_shape[i].size(); ++j)
+            {
+                if (block_shape[i][j] == CANTSET)
+                {
+                    if (status[color_idx][y + i - 2][x + j - 2] == ABLESET)
+                        return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    //--------------------------------------
+    // 配置可能な座標を全探索
+    //--------------------------------------
+    vector<pair<int, int>> search_settable_position(Color color, const Block &block)
+    {
+        vector<pair<int, int>> settable_position;
+        int color_idx = static_cast<int>(color);
+
+        for (int x = 1; x <= TILE_NUMBER; ++x)
+        {
+            for (int y = 1; y <= TILE_NUMBER; ++y)
+            {
+                if (status[color_idx][y][x] != CANTSET)
+                {
+                    if (settable_check(color, block.shape, x, y))
+                        settable_position.push_back({x, y});
+                }
+            }
+        }
+        return settable_position;
+    }
+
+    //--------------------------------------
+    // 状態の更新（ブロックを置いたときの影響）
+    //--------------------------------------
+    void change_status(Color color, const vector<vector<int>> &block_shape, const vector<vector<int>> &block_influence, int x, int y)
+    {
+        int color_idx = static_cast<int>(color);
+
+        // 自分のボードに影響
+        for (int i = 0; i < (int)block_influence.size(); ++i)
+        {
+            for (int j = 0; j < (int)block_influence[i].size(); ++j)
+            {
+                if (block_influence[i][j] == CANTSET)
+                    status[color_idx][y + i - 3][x + j - 3] = CANTSET;
+                else if (block_influence[i][j] == ABLESET)
+                {
+                    if (status[color_idx][y + i - 3][x + j - 3] == BLANK)
+                        status[color_idx][y + i - 3][x + j - 3] = ABLESET;
+                }
+            }
+        }
+
+        // 相手のボードに影響
+        for (int opp = 0; opp < COLOR_NUM; ++opp)
+        {
+            if (opp == color_idx)
+                continue;
+
+            for (int i = 0; i < (int)block_shape.size(); ++i)
+            {
+                for (int j = 0; j < (int)block_shape[i].size(); ++j)
+                {
+                    if (block_shape[i][j] == CANTSET)
+                        status[opp][y + i - 2][x + j - 2] = CANTSET;
+                }
+            }
+        }
+    }
+
+    //--------------------------------------
+    // デバッグ用表示
+    //--------------------------------------
+    void print(Color color)
+    {
+        int color_idx = static_cast<int>(color);
+        for (int y = 1; y <= TILE_NUMBER; ++y)
+        {
+            for (int x = 1; x <= TILE_NUMBER; ++x)
+            {
+                cout << status[color_idx][y][x] << " ";
+            }
+            cout << endl;
+        }
+    }
 };
 
 extern "C"
