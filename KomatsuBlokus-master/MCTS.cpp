@@ -14,9 +14,10 @@
 #include <string>
 #include <vector>
 #include <unordered_map>
-#include "block_data.h"
 #include <tuple>
+#include "block_data.h"
 // エイリアス(よくわからない人はAPG4bに従いusing namespace std;をしてください)
+using namespace std;
 using std::array, std::vector;
 using std::cout, std::endl, std::cin;
 using std::deque;
@@ -138,6 +139,20 @@ struct Block
     vector<vector<int>> shape;
     vector<vector<int>> influence;
 
+    Block(const BlockData &data)
+    {
+        // std::array → vector に変換
+        shape.resize(5, vector<int>(5));
+        for (int i = 0; i < 5; ++i)
+            for (int j = 0; j < 5; ++j)
+                shape[i][j] = data.shape[i][j];
+
+        influence.resize(7, vector<int>(7));
+        for (int i = 0; i < 7; ++i)
+            for (int j = 0; j < 7; ++j)
+                influence[i][j] = data.influence[i][j];
+    }
+
     // 2次元ベクトルを転置
     vector<vector<int>> transpose(const vector<vector<int>> &mat)
     {
@@ -213,6 +228,16 @@ struct Block
     }
 };
 
+struct Player
+{
+    bool passed = false;
+    int color;                          // 0 or 1
+    vector<int> block_shape_index_list; // 例: {0, 1, 2, ...}
+    vector<int> used_blocks;
+    vector<tuple<int, int, vector<pair<int, int>>>> usable_blocks;
+    // (block_id, direction, settable_positions)
+};
+
 extern "C"
 {
     // 時間を管理するクラス（ゲームで学ぶ探索アルゴリズム実践入門のサンプルとは管理方法が異なる）
@@ -266,17 +291,114 @@ extern "C"
 
     class Board
     {
-        std::vector<std::vector<std::vector<int>>> status;
-        bool settable_check(int color, const std::vector<std::vector<int>> &block_shape, int x, int y);
-        std::vector<std::pair<int, int>> search_settable_position(int color, const Block &block);
     };
 
     class State
     {
     public:
-        Board board;
-        std::vector<Block> blocks;
-        int current_player;
+        static const int TILE_NUMBER = 14; // Blokus Duoの場合14x14
+        vector<vector<int>> board;         // [y][x]
+        static constexpr int CANTSET = -1;
+        static constexpr int ABLESET = 1;
+
+        State()
+        {
+            board = vector<vector<int>>(TILE_NUMBER + 2, vector<int>(TILE_NUMBER + 2, 0));
+        }
+
+        // --- settable_check ---
+        bool settable_check(int color, const vector<vector<int>> &shape, int x, int y)
+        {
+            int h = shape.size();
+            int w = shape[0].size();
+
+            bool found_able = false;
+            for (int i = 0; i < h; ++i)
+            {
+                for (int j = 0; j < w; ++j)
+                {
+                    if (shape[i][j] == CANTSET)
+                    {
+                        int by = y + i - 2;
+                        int bx = x + j - 2;
+                        if (by < 0 || bx < 0 || by >= TILE_NUMBER || bx >= TILE_NUMBER)
+                            return false;
+                        if (board[by][bx] == CANTSET)
+                            return false;
+                    }
+                }
+            }
+            // 1つでもABLESETがあれば置ける
+            for (int i = 0; i < h; ++i)
+            {
+                for (int j = 0; j < w; ++j)
+                {
+                    if (shape[i][j] == CANTSET)
+                    {
+                        int by = y + i - 2;
+                        int bx = x + j - 2;
+                        if (board[by][bx] == ABLESET)
+                            found_able = true;
+                    }
+                }
+            }
+            return found_able;
+        }
+
+        // --- search_settable_position ---
+        vector<pair<int, int>> search_settable_position(int color, const vector<vector<int>> &shape)
+        {
+            vector<pair<int, int>> positions;
+            for (int x = 1; x <= TILE_NUMBER; ++x)
+            {
+                for (int y = 1; y <= TILE_NUMBER; ++y)
+                {
+                    if (board[y][x] != CANTSET)
+                    {
+                        if (settable_check(color, shape, x, y))
+                        {
+                            positions.emplace_back(x, y);
+                        }
+                    }
+                }
+            }
+            return positions;
+        }
+
+        // --- any_block_settable_check ---
+        bool any_block_settable_check(Player &player, const unordered_map<string, Block> &block_table)
+        {
+            if (player.passed)
+                return false;
+
+            player.usable_blocks.clear();
+            for (int block_index : player.block_shape_index_list)
+            {
+                if (find(player.used_blocks.begin(), player.used_blocks.end(), block_index) != player.used_blocks.end())
+                    continue;
+
+                for (int dir = 0; dir < 8; ++dir)
+                {
+                    Block block = block_table.at(string(1, 'a' + block_index)); // 仮
+                    block.rotate_block(dir);
+                    auto positions = search_settable_position(player.color, block.shape);
+                    if (!positions.empty())
+                    {
+                        player.usable_blocks.emplace_back(block_index, dir, positions);
+                    }
+                }
+            }
+
+            if (!player.usable_blocks.empty())
+            {
+                return true;
+            }
+            else
+            {
+                player.passed = true;
+                return false;
+            }
+        }
 
         // 現在のターン
         int t_ = 0;
@@ -284,85 +406,6 @@ extern "C"
 
         // ゲームが終了したか判定する
         bool isDone() const { return this->t_ >= END_TURN; }
-
-        bool settable_check(
-            const std::vector<std::vector<int>> &board,
-            int color,
-            const std::array<std::array<int, 5>, 5> &blockShape,
-            int x,
-            int y)
-        {
-            // 盤面範囲チェックを含めた合法判定
-            bool canPlace = false;
-            for (int dy = 0; dy < 5; ++dy)
-            {
-                for (int dx = 0; dx < 5; ++dx)
-                {
-                    if (blockShape[dy][dx] == 0)
-                        continue;
-                    int by = y + dy - 2;
-                    int bx = x + dx - 2;
-                    // 盤面外
-                    if (by < 0 || bx < 0 || by >= BOARD_SIZE || bx >= BOARD_SIZE)
-                        return false;
-                    if (board[by][bx] == CANTSET)
-                        return false;
-                    if (board[by][bx] == ABLESET)
-                        canPlace = true;
-                }
-            }
-            return canPlace;
-        }
-
-        std::vector<Position> search_settable_position(
-            const std::vector<std::vector<int>> &board,
-            int color,
-            const std::array<std::array<int, 5>, 5> &blockShape)
-        {
-            std::vector<Position> settable_positions;
-
-            for (int y = 1; y <= TILE_NUMBER; ++y)
-            {
-                for (int x = 1; x <= TILE_NUMBER; ++x)
-                {
-                    if (board[y][x] != CANTSET &&
-                        settable_check(board, color, blockShape, x, y))
-                    {
-                        settable_positions.push_back({x, y});
-                    }
-                }
-            }
-            return settable_positions;
-        }
-
-        struct MoveCandidate
-        {
-            std::string block_id;
-            int rotation;
-            std::vector<Position> positions;
-        };
-
-        std::vector<MoveCandidate> any_block_settable_check(
-            const std::vector<std::vector<int>> &board,
-            int color,
-            const std::unordered_map<std::string, BlockData> &block_table)
-        {
-            std::vector<MoveCandidate> result;
-
-            for (const auto &[block_name, data] : block_table)
-            {
-                for (int rot = 0; rot < 8; ++rot)
-                { // 8方向の回転＋反転
-                    auto rotated = rotate_block(data.shape, rot);
-                    auto positions = search_settable_position(board, color, rotated);
-                    if (!positions.empty())
-                    {
-                        result.push_back({block_name, rot, positions});
-                    }
-                }
-            }
-            return result;
-        }
 
         // 指定したactionで1ターン進める
         void advance(const int action)
