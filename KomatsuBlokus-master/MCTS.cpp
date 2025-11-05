@@ -132,7 +132,7 @@ const std::unordered_map<std::string, BlockData> block_table = {
 
 };
 
-// Block構造体例
+// Block構造体
 struct Block
 {
     vector<vector<int>> shape;
@@ -353,7 +353,7 @@ extern "C"
             {
                 for (int rot = 0; rot < 8; ++rot)
                 { // 8方向の回転＋反転
-                    auto rotated = rotateBlock(data.shape, rot);
+                    auto rotated = rotate_block(data.shape, rot);
                     auto positions = search_settable_position(board, color, rotated);
                     if (!positions.empty())
                     {
