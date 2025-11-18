@@ -164,9 +164,9 @@ struct Block
         case 0: // 初期向き
             break;
 
-        case 1:                                 // 裏向き
-            shape = rot90(transpose(shape), 3); // Pythonでは -1
-            influence = rot90(transpose(influence), 3);
+        case 1: // 裏向き
+            shape = rot90(transpose(shape), 1);
+            influence = rot90(transpose(influence), 1);
             break;
 
         case 2: // 初期向きから90°時計回り
@@ -185,8 +185,8 @@ struct Block
             break;
 
         case 5: // 裏向きから180°反時計回り
-            shape = rot90(transpose(shape), 1);
-            influence = rot90(transpose(influence), 1);
+            shape = rot90(transpose(shape), 3);
+            influence = rot90(transpose(influence), 3);
             break;
 
         case 6: // 初期向きから270°時計回り
