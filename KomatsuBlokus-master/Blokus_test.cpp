@@ -5,6 +5,7 @@
 #include <array>
 #include <chrono>
 #include <iostream>
+#include <iomanip>
 #include <queue>
 #include <random>
 #include <string>
@@ -225,100 +226,81 @@ struct Block
     }
 };
 
+#include <vector>
+#include <utility>
+#include <iostream>
+
+using std::cout;
+using std::endl;
+using std::pair;
+using std::vector;
+
 class Board
 {
 public:
-    enum
-    {
-        BLANK = 0,
-        CANTSET = 1,
-        ABLESET = 2
-    };
+    inline static const int BLANK = 0;
+    inline static const int CANTSET = 1;
+    inline static const int ABLESET = 2;
 
     int TILE_NUMBER;
-    vector<Color> COLOR_LIST;
 
-    array<vector<vector<int>>, COLOR_NUM> status;
+    // status[color][y][x] の形で入力される
+    vector<vector<vector<int>>> status; // [COLOR_NUM][TILE_NUMBER+2][TILE_NUMBER+2]
 
-    // ---------- コンストラクタ（外部盤面を受け取る版） ----------
-    Board(int tile_number, const vector<Color> &color_list, const array<vector<vector<int>>, COLOR_NUM> &input_board)
-        : TILE_NUMBER(tile_number), COLOR_LIST(color_list)
-    {
-        status = input_board;
-    }
+    Board(int tile_number, const vector<vector<vector<int>>> &input_board)
+        : TILE_NUMBER(tile_number), status(input_board) {}
 
     // ---------- settable_check ----------
     bool settable_check(Color color, const vector<vector<int>> &block_shape, int x, int y)
     {
         int col = static_cast<int>(color);
-        int shape_h = block_shape.size();
-        int shape_w = block_shape[0].size();
 
-        for (int i = 0; i < shape_h; ++i)
+        for (int i = 0; i < block_shape.size(); ++i)
         {
-            for (int j = 0; j < shape_w; ++j)
+            for (int j = 0; j < block_shape[i].size(); ++j)
             {
-                if (block_shape[i][j] == CANTSET)
-                {
-                    int access_y = y + i - shape_h / 2;
-                    int access_x = x + j - shape_w / 2;
+                int access_y = y + i - 2;
+                int access_x = x + j - 2;
 
-                    // 盤面外なら置けない
-                    if (access_y < 0 || access_y >= TILE_NUMBER + 2 ||
-                        access_x < 0 || access_x >= TILE_NUMBER + 2)
-                    {
-                        // デバッグ出力
-                        std::cout << "[settable_check] Out of range! i=" << i << " j=" << j
-                                  << " access_y=" << access_y << " access_x=" << access_x << std::endl;
-                        return false;
-                    }
+                // 範囲外アクセスはスキップ
+                if (access_y < 0 || access_y >= TILE_NUMBER + 2 || access_x < 0 || access_x >= TILE_NUMBER + 2)
+                    continue;
 
-                    if (status[col][access_y][access_x] == CANTSET)
-                        return false;
-                }
+                if (block_shape[i][j] == CANTSET &&
+                    status[col][access_y][access_x] == CANTSET)
+                    return false;
             }
         }
 
-        for (int i = 0; i < shape_h; ++i)
+        for (int i = 0; i < block_shape.size(); ++i)
         {
-            for (int j = 0; j < shape_w; ++j)
+            for (int j = 0; j < block_shape[i].size(); ++j)
             {
-                if (block_shape[i][j] == CANTSET)
-                {
-                    int access_y = y + i - shape_h / 2;
-                    int access_x = x + j - shape_w / 2;
+                int access_y = y + i - 2;
+                int access_x = x + j - 2;
 
-                    if (status[col][access_y][access_x] == ABLESET)
-                        return true;
-                }
+                if (access_y < 0 || access_y >= TILE_NUMBER + 2 || access_x < 0 || access_x >= TILE_NUMBER + 2)
+                    continue;
+
+                if (block_shape[i][j] == CANTSET &&
+                    status[col][access_y][access_x] == ABLESET)
+                    return true;
             }
         }
+
         return false;
     }
 
-    // ---------- search_settable_position ----------
+    // ---------- 合法手探索 ----------
     vector<pair<int, int>> search_settable_position(Color color, const vector<vector<int>> &block_shape)
     {
         vector<pair<int, int>> res;
         int col = static_cast<int>(color);
 
-        int shape_h = block_shape.size();
-        int shape_w = block_shape[0].size();
-
-        // ブロックが盤面外にはみ出ない範囲でループ
-        for (int x = 1; x <= TILE_NUMBER; ++x)
+        for (int y = 1; y <= TILE_NUMBER; ++y)
         {
-            for (int y = 1; y <= TILE_NUMBER; ++y)
+            for (int x = 1; x <= TILE_NUMBER; ++x)
             {
-                // 中心座標基準でチェック
-                int access_top = y - shape_h / 2;
-                int access_left = x - shape_w / 2;
-                int access_bottom = y + (shape_h - 1) / 2;
-                int access_right = x + (shape_w - 1) / 2;
-
-                if (access_top < 0 || access_left < 0 || access_bottom >= TILE_NUMBER + 2 || access_right >= TILE_NUMBER + 2)
-                    continue;
-
                 if (status[col][y][x] != CANTSET)
                 {
                     if (settable_check(color, block_shape, x, y))
@@ -329,100 +311,77 @@ public:
 
         return res;
     }
-
-    // ---------- change_status ----------
-    void change_status(Color color,
-                       const vector<vector<int>> &block_shape,
-                       const vector<vector<int>> &block_influence,
-                       int x, int y)
-    {
-        int col = static_cast<int>(color);
-
-        // 自分のボードに影響を反映
-        for (int i = 0; i < block_influence.size(); ++i)
-        {
-            for (int j = 0; j < block_influence[i].size(); ++j)
-            {
-                if (block_influence[i][j] == CANTSET)
-                    status[col][y + i - 3][x + j - 3] = CANTSET;
-                else if (block_influence[i][j] == ABLESET && status[col][y + i - 3][x + j - 3] == BLANK)
-                    status[col][y + i - 3][x + j - 3] = ABLESET;
-            }
-        }
-
-        // 他のプレイヤーのボードに影響
-        for (int other = 0; other < COLOR_NUM; ++other)
-        {
-            if (other == col)
-                continue;
-            for (int i = 0; i < block_shape.size(); ++i)
-            {
-                for (int j = 0; j < block_shape[i].size(); ++j)
-                {
-                    if (block_shape[i][j] == CANTSET)
-                        status[other][y + i - 2][x + j - 2] = CANTSET;
-                }
-            }
-        }
-    }
 };
 
 int main()
 {
-    // 定数
-    int TILE_NUMBER = 5;
-    array<vector<vector<int>>, COLOR_NUM> board_input;
+    const int TILE_NUMBER = 14;
 
-    // 盤面初期化（全てBLANK + 外枠はCANTSET）
-    for (int c = 0; c < COLOR_NUM; ++c)
+    // 盤面データを作成（2色用）
+    vector<vector<vector<int>>> input_board(2,
+                                            vector<vector<int>>(TILE_NUMBER + 2, vector<int>(TILE_NUMBER + 2, Board::BLANK)));
+
+    // 外枠をCANTSETに
+    for (int col = 0; col < 2; ++col)
     {
-        board_input[c].assign(TILE_NUMBER + 2, vector<int>(TILE_NUMBER + 2, Board::BLANK));
-
         for (int i = 0; i < TILE_NUMBER + 2; ++i)
         {
-            board_input[c][0][i] = Board::CANTSET;
-            board_input[c][TILE_NUMBER + 1][i] = Board::CANTSET;
-        }
-        for (int i = 1; i <= TILE_NUMBER; ++i)
-        {
-            board_input[c][i][0] = Board::CANTSET;
-            board_input[c][i][TILE_NUMBER + 1] = Board::CANTSET;
+            input_board[col][0][i] = Board::CANTSET;
+            input_board[col][TILE_NUMBER + 1][i] = Board::CANTSET;
+            input_board[col][i][0] = Board::CANTSET;
+            input_board[col][i][TILE_NUMBER + 1] = Board::CANTSET;
         }
     }
 
-    // 初期置ける位置をセット（テスト用）
-    board_input[0][1][1] = Board::ABLESET;                     // プレイヤー1
-    board_input[1][TILE_NUMBER][TILE_NUMBER] = Board::ABLESET; // プレイヤー2
+    // スタート地点
+    input_board[0][5][5] = Board::ABLESET;                             // PLAYER1
+    input_board[1][TILE_NUMBER - 4][TILE_NUMBER - 4] = Board::ABLESET; // PLAYER2
 
-    // Board クラス生成
-    vector<Color> colors = {Color::PLAYER1, Color::PLAYER2};
-    Board board(TILE_NUMBER, colors, board_input);
+    // Boardインスタンス生成（TILE_NUMBER と盤面だけ）
+    Board board(TILE_NUMBER, input_board);
 
-    // テスト用ブロック (3x3 のL字型)
+    // サンプルブロック（2x2のL字型）
     vector<vector<int>> block_shape = {
-        {Board::CANTSET, Board::BLANK, Board::BLANK},
-        {Board::CANTSET, Board::CANTSET, Board::CANTSET},
-        {Board::BLANK, Board::BLANK, Board::BLANK}};
+        {Board::CANTSET, Board::BLANK},
+        {Board::CANTSET, Board::CANTSET}};
 
-    // settable_check テスト
-    cout << "Player1, position (1,1): ";
-    if (board.settable_check(Color::PLAYER1, block_shape, 1, 1))
-        cout << "SETTABLE" << endl;
-    else
-        cout << "CANNOT SET" << endl;
-
-    cout << "Player2, position (5,5): ";
-    if (board.settable_check(Color::PLAYER2, block_shape, 5, 5))
-        cout << "SETTABLE" << endl;
-    else
-        cout << "CANNOT SET" << endl;
-
-    // search_settable_position テスト
-    auto positions = board.search_settable_position(Color::PLAYER1, block_shape);
-    cout << "Player1 possible positions:" << endl;
-    for (auto [x, y] : positions)
+    // --- デバッグ出力: 盤面 ---
+    for (int col = 0; col < 2; ++col)
     {
-        cout << "(" << x << "," << y << ")" << endl;
+        cout << "Board for PLAYER" << col + 1 << ":" << endl;
+        for (int y = 0; y < TILE_NUMBER + 2; ++y)
+        {
+            for (int x = 0; x < TILE_NUMBER + 2; ++x)
+                cout << setw(2) << input_board[col][y][x] << " ";
+            cout << endl;
+        }
+        cout << endl;
+    }
+
+    // --- デバッグ出力: ブロック ---
+    cout << "Block shape:" << endl;
+    for (int i = 0; i < block_shape.size(); ++i)
+    {
+        for (int j = 0; j < block_shape[i].size(); ++j)
+            cout << setw(2) << block_shape[i][j] << " ";
+        cout << endl;
+    }
+    cout << endl;
+
+    // PLAYER1の合法手探索
+    auto positions = board.search_settable_position(Color::PLAYER1, block_shape);
+    cout << "PLAYER1 possible positions:" << endl;
+    for (auto &p : positions)
+    {
+        cout << "(" << p.first << "," << p.second << ")" << endl;
+    }
+
+    // PLAYER2の合法手探索
+    positions = board.search_settable_position(Color::PLAYER2, block_shape);
+    cout << "PLAYER2 possible positions:" << endl;
+    for (auto &p : positions)
+    {
+        cout << "(" << p.first << "," << p.second << ")" << endl;
     }
 
     return 0;
