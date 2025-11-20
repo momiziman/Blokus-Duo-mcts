@@ -337,51 +337,64 @@ int main()
     input_board[0][5][5] = Board::ABLESET;                             // PLAYER1
     input_board[1][TILE_NUMBER - 4][TILE_NUMBER - 4] = Board::ABLESET; // PLAYER2
 
-    // Boardインスタンス生成（TILE_NUMBER と盤面だけ）
-    Board board(TILE_NUMBER, input_board);
-
-    // サンプルブロック（2x2のL字型）
-    vector<vector<int>> block_shape = {
-        {Board::CANTSET, Board::BLANK},
-        {Board::CANTSET, Board::CANTSET}};
-
-    // --- デバッグ出力: 盤面 ---
-    for (int col = 0; col < 2; ++col)
+    // ------------------------
+    // ★ 盤面の表示処理を追加 ★
+    // ------------------------
+    auto print_board = [&](int color)
     {
-        cout << "Board for PLAYER" << col + 1 << ":" << endl;
+        cout << "BOARD for PLAYER" << (color + 1) << ":\n";
         for (int y = 0; y < TILE_NUMBER + 2; ++y)
         {
             for (int x = 0; x < TILE_NUMBER + 2; ++x)
-                cout << setw(2) << input_board[col][y][x] << " ";
+            {
+                cout << input_board[color][y][x] << " ";
+            }
+            cout << "\n";
+        }
+        cout << "\n";
+    };
+
+    print_board(0); // PLAYER1
+    print_board(1); // PLAYER2
+    // ------------------------
+
+    // Boardインスタンス生成
+    Board board(TILE_NUMBER, input_board);
+
+    // block_table の全ブロックをテスト
+    for (auto &[name, block_data] : block_table)
+    {
+        cout << "Testing block: " << name << endl;
+
+        // ブロックの形状を vector に変換
+        vector<vector<int>> block_vec;
+        for (const auto &row : block_data.shape)
+            block_vec.emplace_back(row.begin(), row.end());
+
+        // ブロック形状表示
+        cout << "Block shape:" << endl;
+        for (auto &row : block_vec)
+        {
+            for (int v : row)
+                cout << v << " ";
             cout << endl;
         }
+
+        // PLAYER1
+        auto positions = board.search_settable_position(Color::PLAYER1, block_vec);
+        cout << "PLAYER1 possible positions:" << endl;
+        for (auto &p : positions)
+            cout << "(" << p.first << "," << p.second << ") ";
         cout << endl;
-    }
 
-    // --- デバッグ出力: ブロック ---
-    cout << "Block shape:" << endl;
-    for (int i = 0; i < block_shape.size(); ++i)
-    {
-        for (int j = 0; j < block_shape[i].size(); ++j)
-            cout << setw(2) << block_shape[i][j] << " ";
+        // PLAYER2
+        positions = board.search_settable_position(Color::PLAYER2, block_vec);
+        cout << "PLAYER2 possible positions:" << endl;
+        for (auto &p : positions)
+            cout << "(" << p.first << "," << p.second << ") ";
         cout << endl;
-    }
-    cout << endl;
 
-    // PLAYER1の合法手探索
-    auto positions = board.search_settable_position(Color::PLAYER1, block_shape);
-    cout << "PLAYER1 possible positions:" << endl;
-    for (auto &p : positions)
-    {
-        cout << "(" << p.first << "," << p.second << ")" << endl;
-    }
-
-    // PLAYER2の合法手探索
-    positions = board.search_settable_position(Color::PLAYER2, block_shape);
-    cout << "PLAYER2 possible positions:" << endl;
-    for (auto &p : positions)
-    {
-        cout << "(" << p.first << "," << p.second << ")" << endl;
+        cout << "-------------------------" << endl;
     }
 
     return 0;
