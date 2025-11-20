@@ -4,8 +4,11 @@ from enum import Enum
 
 import numpy as np
 import pygame
+import ctypes
 
 import Player
+
+mydll=ctypes.cdll.LoadLibrary('MCTS')
 
 
 class Color(Enum):
@@ -122,7 +125,8 @@ class Game():
 
     def set_block_on_click_position(self, board, block):
         if self.current_player.computer:
-            select_position = random.choice(self.current_player.use_block[2])
+            select_position = random.choice(self.current_player.use_block[2]) #変更箇所
+                            #
             xpos = select_position[0]
             ypos = select_position[1]
             self.change_all(board, block, xpos, ypos)
