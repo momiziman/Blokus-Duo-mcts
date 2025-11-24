@@ -254,6 +254,7 @@ public:
     bool settable_check(Color color, const vector<vector<int>> &block_shape, int x, int y)
     {
         int col = static_cast<int>(color);
+        bool ret = false;
 
         for (int i = 0; i < block_shape.size(); ++i)
         {
@@ -269,25 +270,11 @@ public:
                 if (block_shape[i][j] == CANTSET &&
                     status[col][access_y][access_x] == CANTSET)
                     return false;
-            }
-        }
-
-        for (int i = 0; i < block_shape.size(); ++i)
-        {
-            for (int j = 0; j < block_shape[i].size(); ++j)
-            {
-                int access_y = y + i - 2;
-                int access_x = x + j - 2;
-
-                if (access_y < 0 || access_y >= TILE_NUMBER + 2 || access_x < 0 || access_x >= TILE_NUMBER + 2)
-                    continue;
-
                 if (block_shape[i][j] == CANTSET &&
                     status[col][access_y][access_x] == ABLESET)
                     return true;
             }
         }
-
         return false;
     }
 
@@ -364,37 +351,48 @@ int main()
     // block_table の全ブロックをテスト
     for (auto &[name, block_data] : block_table)
     {
-        cout << "Testing block: " << name << endl;
+        cout << "\n===== Testing block: " << name << " =====\n";
 
-        // ブロックの形状を vector に変換
-        vector<vector<int>> block_vec;
-        for (const auto &row : block_data.shape)
-            block_vec.emplace_back(row.begin(), row.end());
-
-        // ブロック形状表示
-        cout << "Block shape:" << endl;
-        for (auto &row : block_vec)
+        // ---- shape 出力 ----
+        cout << "Shape:\n";
+        for (auto &row : block_data.shape)
         {
-            for (int v : row)
+            for (auto v : row)
                 cout << v << " ";
             cout << endl;
         }
 
-        // PLAYER1
+        // ---- influence 出力 ----
+        cout << "\nInfluence:\n";
+        for (auto &row : block_data.influence)
+        {
+            for (auto v : row)
+                cout << v << " ";
+            cout << endl;
+        }
+
+        // ---- vector<vector<int>> に変換 ----
+        vector<vector<int>> block_vec;
+        for (const auto &row : block_data.shape)
+        {
+            block_vec.emplace_back(row.begin(), row.end());
+        }
+
+        // ---- PLAYER1 ----
         auto positions = board.search_settable_position(Color::PLAYER1, block_vec);
-        cout << "PLAYER1 possible positions:" << endl;
+        cout << "\nPLAYER1 possible positions:\n";
         for (auto &p : positions)
             cout << "(" << p.first << "," << p.second << ") ";
         cout << endl;
 
-        // PLAYER2
+        // ---- PLAYER2 ----
         positions = board.search_settable_position(Color::PLAYER2, block_vec);
-        cout << "PLAYER2 possible positions:" << endl;
+        cout << "PLAYER2 possible positions:\n";
         for (auto &p : positions)
             cout << "(" << p.first << "," << p.second << ") ";
         cout << endl;
 
-        cout << "-------------------------" << endl;
+        cout << "-----------------------------------------\n";
     }
 
     return 0;
