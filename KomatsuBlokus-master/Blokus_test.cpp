@@ -327,138 +327,107 @@ public:
                        const vector<vector<int>> &block_influence,
                        int x, int y)
     {
-        int influence_size = block_influence.size();
-        int shape_size = block_shape.size();
+        int H = status[0].size();    // board height
+        int W = status[0][0].size(); // board width
 
-        // --- ブロック影響を自分のボードに適用 ---
-        for (int r = 0; r < influence_size; r++)
+        int I = block_influence.size();
+        int S = block_shape.size();
+
+        auto in_bounds = [&](int yy, int xx)
         {
-            for (int c = 0; c < influence_size; c++)
+            return (0 <= yy && yy < H && 0 <= xx && xx < W);
+        };
+
+        // --- 自分の盤面へ influence を適用 ---
+        for (int r = 0; r < I; r++)
+        {
+            for (int c = 0; c < I; c++)
             {
+                int yy = y + r - 3;
+                int xx = x + c - 3;
+
+                if (!in_bounds(yy, xx))
+                    continue;
+
                 if (block_influence[r][c] == CANTSET)
                 {
-                    status[(int)color][y + r - 3][x + c - 3] = CANTSET;
+                    status[(int)color][yy][xx] = CANTSET;
                 }
                 else if (block_influence[r][c] == ABLESET)
                 {
-                    if (status[(int)color][y + r - 3][x + c - 3] == BLANK)
+                    if (status[(int)color][yy][xx] == BLANK)
                     {
-                        status[(int)color][y + r - 3][x + c - 3] = ABLESET;
+                        status[(int)color][yy][xx] = ABLESET;
                     }
                 }
             }
         }
 
-        // --- 相手ボードにshapeの影響を適用 ---
+        // --- 相手盤面へ shape を適用 ---
         for (int opponent = 0; opponent < 2; opponent++)
         {
             if (opponent == (int)color)
-                continue; // 自分の色ならスキップ
+                continue;
 
-            for (int r = 0; r < shape_size; r++)
+            for (int r = 0; r < S; r++)
             {
-                for (int c = 0; c < shape_size; c++)
+                for (int c = 0; c < S; c++)
                 {
-                    if (block_shape[r][c] == CANTSET)
-                    {
-                        status[opponent][y + r - 2][x + c - 2] = CANTSET;
-                    }
+                    if (block_shape[r][c] != CANTSET)
+                        continue;
+
+                    int yy = y + r - 2;
+                    int xx = x + c - 2;
+
+                    if (!in_bounds(yy, xx))
+                        continue;
+
+                    status[opponent][yy][xx] = CANTSET;
                 }
             }
         }
     }
-};
 
-int main()
-{
-    const int TILE_NUMBER = 14;
-
-    // --- 盤面初期化 ---
-    vector<vector<vector<int>>> input_board = {
-        {{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-         {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-         {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-         {1, 0, 0, 0, 0, 2, 1, 2, 0, 0, 0, 0, 0, 0, 0, 1},
-         {1, 0, 0, 0, 2, 1, 1, 1, 2, 0, 0, 0, 0, 0, 0, 1},
-         {1, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1}, // PLAYER1 start (ABLESET)
-         {1, 0, 0, 0, 2, 1, 1, 1, 2, 0, 0, 0, 0, 0, 0, 1},
-         {1, 0, 0, 0, 0, 2, 1, 2, 0, 0, 0, 0, 0, 0, 0, 1},
-         {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-         {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-         {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-         {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-         {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-         {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-         {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-         // Player2
-         {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}},
-        {{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-         {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-         {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-         {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-         {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-         {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-         {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-         {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-         {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 1, 2, 0, 0, 1},
-         {1, 0, 0, 0, 0, 0, 0, 0, 2, 1, 1, 1, 1, 0, 0, 1},
-         {1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 1},
-         {1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 2, 0, 0, 1},
-         {1, 0, 0, 0, 0, 0, 0, 0, 2, 1, 2, 0, 0, 0, 0, 1},
-         {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-         {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-         {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}}};
-
-    // Board生成
-    Board board(TILE_NUMBER, input_board);
-
-    // --- ブロックテスト開始 ---
-    for (auto &[name, block_data] : block_table)
+    int main()
     {
-        cout << "\n=============================\n";
-        cout << "Testing block: " << name << "\n";
+        const int TILE_NUMBER = 14;
 
-        // Blockクラスへ変換
-        Block block(block_data);
+        // --- 盤面初期化 ---
+        vector<vector<vector<int>>> input_board = {
+            {{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+             {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+             {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+             {1, 0, 0, 0, 0, 2, 1, 2, 0, 0, 0, 0, 0, 0, 0, 1},
+             {1, 0, 0, 0, 2, 1, 1, 1, 2, 0, 0, 0, 0, 0, 0, 1},
+             {1, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1}, // PLAYER1 start (ABLESET)
+             {1, 0, 0, 0, 2, 1, 1, 1, 2, 0, 0, 0, 0, 0, 0, 1},
+             {1, 0, 0, 0, 0, 2, 1, 2, 0, 0, 0, 0, 0, 0, 0, 1},
+             {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+             {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+             {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+             {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+             {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+             {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+             {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+             // Player2
+             {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}},
+            {{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+             {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+             {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+             {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+             {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+             {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+             {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+             {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+             {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 1, 2, 0, 0, 1},
+             {1, 0, 0, 0, 0, 0, 0, 0, 2, 1, 1, 1, 1, 0, 0, 1},
+             {1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 1},
+             {1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 2, 0, 0, 1},
+             {1, 0, 0, 0, 0, 0, 0, 0, 2, 1, 2, 0, 0, 0, 0, 1},
+             {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+             {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+             {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}}};
 
-        // 8方向回す
-        for (int rot = 0; rot < 8; rot++)
-        {
-            // 回転前の状態を保存（回転が蓄積しないように）
-            Block rotated_block(block_data);
-            rotated_block.rotate_block(rot);
-
-            cout << "\n--- Rotation " << rot << " ---\n";
-
-            // 形状表示
-            cout << "Shape:\n";
-            for (auto &row : rotated_block.shape)
-            {
-                for (int v : row)
-                    cout << v << " ";
-                cout << "\n";
-            }
-
-            // 合法手探索
-            auto positions = board.search_settable_position(Color::PLAYER1, rotated_block.shape);
-            cout << "PLAYER1 Positions: ";
-            if (positions.empty())
-                cout << "(none)";
-            else
-                for (auto &p : positions)
-                    cout << "(" << p.first << "," << p.second << ") ";
-            cout << "\n";
-
-            positions = board.search_settable_position(Color::PLAYER2, rotated_block.shape);
-            cout << "PLAYER2 Positions: ";
-            if (positions.empty())
-                cout << "(none)";
-            else
-                for (auto &p : positions)
-                    cout << "(" << p.first << "," << p.second << ") ";
-            cout << "\n";
-        }
+        // Board生成
+        Board board(TILE_NUMBER, input_board);
     }
-
-    return 0;
-}
