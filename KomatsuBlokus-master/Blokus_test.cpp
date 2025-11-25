@@ -11,6 +11,7 @@
 #include <string>
 #include <vector>
 #include <unordered_map>
+#include <utility>
 #include <tuple>
 #include "block_data.h"
 using std::array, std::vector;
@@ -236,10 +237,6 @@ BlockData getBlock(const std::string &id)
     return it->second;
 }
 
-#include <vector>
-#include <utility>
-#include <iostream>
-
 using std::cout;
 using std::endl;
 using std::pair;
@@ -264,41 +261,37 @@ public:
     bool settable_check(Color color, const vector<vector<int>> &block_shape, int x, int y)
     {
         int col = static_cast<int>(color);
+        bool found_corner = false; // ABLESET に触れたかどうか
 
-        for (int i = 0; i < block_shape.size(); ++i)
+        int H = block_shape.size();
+        int W = block_shape[0].size();
+
+        for (int i = 0; i < H; ++i)
         {
-            for (int j = 0; j < block_shape[i].size(); ++j)
+            for (int j = 0; j < W; ++j)
             {
+                if (block_shape[i][j] != CANTSET)
+                    continue;
+
                 int access_y = y + i - 2;
                 int access_x = x + j - 2;
 
-                // 範囲外アクセスはスキップ
-                if (access_y < 0 || access_y >= TILE_NUMBER + 2 || access_x < 0 || access_x >= TILE_NUMBER + 2)
+                // 範囲外は無視
+                if (access_y < 0 || access_y >= TILE_NUMBER + 2 ||
+                    access_x < 0 || access_x >= TILE_NUMBER + 2)
                     continue;
 
-                if (block_shape[i][j] == CANTSET &&
-                    status[col][access_y][access_x] == CANTSET)
-                    return false;
+                int cell = status[col][access_y][access_x];
+
+                if (cell == CANTSET)
+                    return false; // 隣接 or 自身にぶつかる → 置けない
+
+                if (cell == ABLESET)
+                    found_corner = true; // 角接触
             }
         }
 
-        for (int i = 0; i < block_shape.size(); ++i)
-        {
-            for (int j = 0; j < block_shape[i].size(); ++j)
-            {
-                int access_y = y + i - 2;
-                int access_x = x + j - 2;
-
-                if (access_y < 0 || access_y >= TILE_NUMBER + 2 || access_x < 0 || access_x >= TILE_NUMBER + 2)
-                    continue;
-
-                if (block_shape[i][j] == CANTSET &&
-                    status[col][access_y][access_x] == ABLESET)
-                    return true;
-            }
-        }
-
-        return false;
+        return found_corner;
     }
 
     // ---------- 合法手探索 ----------
@@ -387,47 +380,98 @@ public:
             }
         }
     }
+};
 
-    int main()
+int main()
+{
+    const int TILE_NUMBER = 14;
+
+    // --- 盤面初期化 ---
+    vector<vector<vector<int>>> input_board = {
+        {{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+         {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+         {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+         {1, 0, 0, 0, 0, 2, 1, 2, 0, 0, 0, 0, 0, 0, 0, 1},
+         {1, 0, 0, 0, 2, 1, 1, 1, 2, 0, 0, 0, 0, 0, 0, 1},
+         {1, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1}, // PLAYER1 start (ABLESET)
+         {1, 0, 0, 0, 2, 1, 1, 1, 2, 0, 0, 0, 0, 0, 0, 1},
+         {1, 0, 0, 0, 0, 2, 1, 2, 0, 0, 0, 0, 0, 0, 0, 1},
+         {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+         {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+         {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+         {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+         {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+         {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+         {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+         // Player2
+         {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}},
+        {{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+         {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+         {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+         {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+         {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+         {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+         {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+         {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+         {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 1, 2, 0, 0, 1},
+         {1, 0, 0, 0, 0, 0, 0, 0, 2, 1, 1, 1, 1, 0, 0, 1},
+         {1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 1},
+         {1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 2, 0, 0, 1},
+         {1, 0, 0, 0, 0, 0, 0, 0, 2, 1, 2, 0, 0, 0, 0, 1},
+         {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+         {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+         {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}}};
+
+    // Board生成
+    Board board(TILE_NUMBER, input_board);
+
+    // --- ブロックテスト開始 ---
+    for (auto &[name, block_data] : block_table)
     {
-        const int TILE_NUMBER = 14;
+        cout << "\n=============================\n";
+        cout << "Testing block: " << name << "\n";
 
-        // --- 盤面初期化 ---
-        vector<vector<vector<int>>> input_board = {
-            {{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-             {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-             {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-             {1, 0, 0, 0, 0, 2, 1, 2, 0, 0, 0, 0, 0, 0, 0, 1},
-             {1, 0, 0, 0, 2, 1, 1, 1, 2, 0, 0, 0, 0, 0, 0, 1},
-             {1, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1}, // PLAYER1 start (ABLESET)
-             {1, 0, 0, 0, 2, 1, 1, 1, 2, 0, 0, 0, 0, 0, 0, 1},
-             {1, 0, 0, 0, 0, 2, 1, 2, 0, 0, 0, 0, 0, 0, 0, 1},
-             {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-             {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-             {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-             {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-             {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-             {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-             {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-             // Player2
-             {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}},
-            {{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-             {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-             {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-             {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-             {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-             {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-             {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-             {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-             {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 1, 2, 0, 0, 1},
-             {1, 0, 0, 0, 0, 0, 0, 0, 2, 1, 1, 1, 1, 0, 0, 1},
-             {1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 1},
-             {1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 2, 0, 0, 1},
-             {1, 0, 0, 0, 0, 0, 0, 0, 2, 1, 2, 0, 0, 0, 0, 1},
-             {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-             {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-             {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}}};
+        // Blockクラスへ変換
+        Block block(block_data);
 
-        // Board生成
-        Board board(TILE_NUMBER, input_board);
+        // 8方向回す
+        for (int rot = 0; rot < 8; rot++)
+        {
+            // 回転前の状態を保存（回転が蓄積しないように）
+            Block rotated_block(block_data);
+            rotated_block.rotate_block(rot);
+
+            cout << "\n--- Rotation " << rot << " ---\n";
+
+            // 形状表示
+            cout << "Shape:\n";
+            for (auto &row : rotated_block.shape)
+            {
+                for (int v : row)
+                    cout << v << " ";
+                cout << "\n";
+            }
+
+            // 合法手探索
+            auto positions = board.search_settable_position(Color::PLAYER1, rotated_block.shape);
+            cout << "PLAYER1 Positions: ";
+            if (positions.empty())
+                cout << "(none)";
+            else
+                for (auto &p : positions)
+                    cout << "(" << p.first << "," << p.second << ") ";
+            cout << "\n";
+
+            positions = board.search_settable_position(Color::PLAYER2, rotated_block.shape);
+            cout << "PLAYER2 Positions: ";
+            if (positions.empty())
+                cout << "(none)";
+            else
+                for (auto &p : positions)
+                    cout << "(" << p.first << "," << p.second << ") ";
+            cout << "\n";
+        }
     }
+
+    return 0;
+}
