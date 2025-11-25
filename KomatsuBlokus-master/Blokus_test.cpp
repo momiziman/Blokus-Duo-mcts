@@ -13,6 +13,7 @@
 #include <unordered_map>
 #include <utility>
 #include <tuple>
+#include <map>
 #include "block_data.h"
 using std::array, std::vector;
 using std::cout, std::endl, std::cin;
@@ -380,6 +381,20 @@ public:
             }
         }
     }
+
+    void print_status(Color color)
+    {
+        int col = static_cast<int>(color);
+
+        for (int y = 0; y < TILE_NUMBER + 2; y++)
+        {
+            for (int x = 0; x < TILE_NUMBER + 2; x++)
+            {
+                cout << status[col][y][x] << " ";
+            }
+            cout << endl;
+        }
+    }
 };
 
 int main()
@@ -388,90 +403,90 @@ int main()
 
     // --- 盤面初期化 ---
     vector<vector<vector<int>>> input_board = {
-        {{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-         {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-         {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-         {1, 0, 0, 0, 0, 2, 1, 2, 0, 0, 0, 0, 0, 0, 0, 1},
-         {1, 0, 0, 0, 2, 1, 1, 1, 2, 0, 0, 0, 0, 0, 0, 1},
-         {1, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1}, // PLAYER1 start (ABLESET)
-         {1, 0, 0, 0, 2, 1, 1, 1, 2, 0, 0, 0, 0, 0, 0, 1},
-         {1, 0, 0, 0, 0, 2, 1, 2, 0, 0, 0, 0, 0, 0, 0, 1},
-         {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-         {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-         {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-         {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-         {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-         {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-         {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-         // Player2
-         {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}},
-        {{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-         {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-         {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-         {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-         {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-         {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-         {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-         {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-         {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 1, 2, 0, 0, 1},
-         {1, 0, 0, 0, 0, 0, 0, 0, 2, 1, 1, 1, 1, 0, 0, 1},
-         {1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 1},
-         {1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 2, 0, 0, 1},
-         {1, 0, 0, 0, 0, 0, 0, 0, 2, 1, 2, 0, 0, 0, 0, 1},
-         {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-         {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-         {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}}};
+        // PLAYER1
+        {
+            {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+            {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+            {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+            {1, 0, 0, 0, 2, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+            {1, 0, 0, 2, 1, 1, 1, 2, 0, 0, 0, 0, 0, 0, 0, 1},
+            {1, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1},
+            {1, 0, 0, 2, 1, 1, 1, 2, 0, 0, 0, 0, 0, 0, 0, 1},
+            {1, 0, 0, 0, 2, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+            {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+            {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+            {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+            {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+            {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+            {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+            {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+            {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}},
+        // PLAYER2
+        {
+            {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+            {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+            {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+            {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+            {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+            {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+            {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+            {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+            {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 1, 2, 0, 0, 1},
+            {1, 0, 0, 0, 0, 0, 0, 0, 2, 1, 1, 1, 1, 0, 0, 1},
+            {1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 1},
+            {1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 2, 0, 0, 1},
+            {1, 0, 0, 0, 0, 0, 0, 0, 2, 1, 2, 0, 0, 0, 0, 1},
+            {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+            {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+            {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}}};
 
-    // Board生成
+    // --- Board生成 ---
     Board board(TILE_NUMBER, input_board);
 
-    // --- ブロックテスト開始 ---
-    for (auto &[name, block_data] : block_table)
+    // --- 'l' ブロック取得 ---
+    BlockData data = getBlock("l");
+    Block block(data);
+
+    // 乱数生成器
+    random_device rd;
+    mt19937 gen(rd());
+
+    // --- 全回転パターンの合法手をまとめる ---
+    vector<tuple<int, int, int>> all_legal_positions; // (x, y, rotation)
+
+    for (int rot = 0; rot < 8; ++rot)
     {
-        cout << "\n=============================\n";
-        cout << "Testing block: " << name << "\n";
+        Block tmp_block = block;
+        tmp_block.rotate_block(rot);
 
-        // Blockクラスへ変換
-        Block block(block_data);
+        auto positions = board.search_settable_position(Color::PLAYER1, tmp_block.shape);
 
-        // 8方向回す
-        for (int rot = 0; rot < 8; rot++)
+        for (auto &[x, y] : positions)
         {
-            // 回転前の状態を保存（回転が蓄積しないように）
-            Block rotated_block(block_data);
-            rotated_block.rotate_block(rot);
-
-            cout << "\n--- Rotation " << rot << " ---\n";
-
-            // 形状表示
-            cout << "Shape:\n";
-            for (auto &row : rotated_block.shape)
-            {
-                for (int v : row)
-                    cout << v << " ";
-                cout << "\n";
-            }
-
-            // 合法手探索
-            auto positions = board.search_settable_position(Color::PLAYER1, rotated_block.shape);
-            cout << "PLAYER1 Positions: ";
-            if (positions.empty())
-                cout << "(none)";
-            else
-                for (auto &p : positions)
-                    cout << "(" << p.first << "," << p.second << ") ";
-            cout << "\n";
-
-            positions = board.search_settable_position(Color::PLAYER2, rotated_block.shape);
-            cout << "PLAYER2 Positions: ";
-            if (positions.empty())
-                cout << "(none)";
-            else
-                for (auto &p : positions)
-                    cout << "(" << p.first << "," << p.second << ") ";
-            cout << "\n";
+            all_legal_positions.emplace_back(x, y, rot);
         }
     }
+
+    if (all_legal_positions.empty())
+    {
+        cout << "No legal move available for 'l' block.\n";
+        return 0;
+    }
+
+    // --- ランダムに1つ選ぶ ---
+    uniform_int_distribution<> dis(0, all_legal_positions.size() - 1);
+    auto [sel_x, sel_y, sel_rot] = all_legal_positions[dis(gen)];
+
+    cout << "Selected move: rotation " << sel_rot << ", position (" << sel_x << "," << sel_y << ")\n";
+
+    // --- 選んだ回転を反映して盤面に置く ---
+    Block selected_block = block;
+    selected_block.rotate_block(sel_rot);
+    board.change_status(Color::PLAYER1, selected_block.shape, selected_block.influence, sel_x, sel_y);
+
+    // --- 反映後の盤面表示 ---
+    cout << "Updated Board:\n";
+    board.print_status(Color::PLAYER1);
 
     return 0;
 }
