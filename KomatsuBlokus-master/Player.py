@@ -1,6 +1,7 @@
 import Block
 import random
 import ctypes
+import os
 
 class Player():
     block_shape_index_list     = [chr(ord('a') + i) for i in range(21)] # aからuの配列

@@ -11,22 +11,24 @@
 using std::array, std::vector;
 using std::cout, std::endl, std::cin;
 
-extern "C"
+extern "C" __declspec(dllexport) void printboard(int *board, int tile_number)
 {
-    void printboard(int *board, int boardlen)
-    {
-        for (int i = 0; i < boardlen; i++)
-        {
-            printf("%d", board[i]);
-        }
-    }
+    int SIZE = tile_number + 2;
 
-    bool copy(const double *from, double *to, int n)
+    for (int color = 0; color < 2; color++)
     {
-        for (int i = 0; i < n; i++)
+        printf("=== COLOR %d ===\n", color);
+
+        for (int y = 0; y < SIZE; y++)
         {
-            to[i] = from[i];
+            for (int x = 0; x < SIZE; x++)
+            {
+
+                int index = color * SIZE * SIZE + y * SIZE + x;
+                printf("%d ", board[index]);
+            }
+            printf("\n");
         }
-        return true;
+        printf("\n");
     }
 }
