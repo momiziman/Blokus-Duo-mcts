@@ -122,7 +122,8 @@ enum TileState
 {
     BLANK = 0,
     CANTSET = 1,
-    ABLESET = 2
+    ABLESET = 2,
+    BLOCK = 3
 };
 
 enum class Color
@@ -517,7 +518,7 @@ vector<string> get_legal_block_types(Board &board, Color player_color, Player &p
 }
 
 // ランダムプレイアウト関数
-pair<int, int> random_playout(Board board, Player player1, Player player2)
+pair<int, int> random_playout(Board &board, Player &player1, Player &player2)
 {
     // プレイヤー順番
     Color current_color = Color::PLAYER1;
@@ -612,68 +613,27 @@ int main()
     Player player1{Color::PLAYER1, {"u"}};
     Player player2{Color::PLAYER2, {"s"}};
 
-    // --- プレイヤー1の合法手取得 ---
-    auto legal_moves_p1 = get_all_legal_moves(board, player1.color, player1);
+    // --- ランダムプレイアウト実行 ---
+    std::pair<int, int> result = random_playout(board, player1, player2);
 
-    if (!legal_moves_p1.empty())
-    {
-        std::random_device rd;
-        std::mt19937 gen(rd());
-        std::uniform_int_distribution<> dis(0, legal_moves_p1.size() - 1);
-        int idx = dis(gen);
+    // --- 結果表示 ---
+    std::cout << "=== Random Playout Result ===" << std::endl;
+    std::cout << "Player1 score: " << result.first << std::endl;
+    std::cout << "Player2 score: " << result.second << std::endl;
 
-        auto [block_id, x, y, rot] = legal_moves_p1[idx];
-        BlockData data = getBlock(block_id);
-        Block block(data);
-
-        board.change_status(player1.color, block, block_id, rot, x, y, player1);
-        cout << "Board status (Player1):\n";
-        board.print_status(player1.color);
-
-        cout << "Player1 placed block " << block_id << " at (" << x << "," << y << ") with rotation " << rot << "\n";
-    }
+    if (result.first > result.second)
+        std::cout << "Winner: Player1" << std::endl;
+    else if (result.first < result.second)
+        std::cout << "Winner: Player2" << std::endl;
     else
-    {
-        cout << "Player1 has no legal moves.\n";
-    }
+        std::cout << "Draw" << std::endl;
 
-    // --- プレイヤー2の合法手取得 ---
-    auto legal_moves_p2 = get_all_legal_moves(board, player2.color, player2);
+    // --- 最終盤面表示 ---
+    std::cout << "\n=== Final Board: PLAYER1 ===" << std::endl;
+    board.print_status(Color::PLAYER1);
 
-    if (!legal_moves_p2.empty())
-    {
-        std::random_device rd;
-        std::mt19937 gen(rd());
-        std::uniform_int_distribution<> dis(0, legal_moves_p2.size() - 1);
-        int idx = dis(gen);
-
-        auto [block_id, x, y, rot] = legal_moves_p2[idx];
-        BlockData data = getBlock(block_id);
-        Block block(data);
-
-        board.change_status(player2.color, block, block_id, rot, x, y, player2);
-
-        cout << "Player2 placed block " << block_id << " at (" << x << "," << y << ") with rotation " << rot << "\n";
-    }
-    else
-    {
-        cout << "Player2 has no legal moves.\n";
-    }
-
-    // --- 盤面表示 ---
-    cout << "Board status (Player2):\n";
-    board.print_status(player2.color);
-
-    // --- used_blocks 確認 ---
-    cout << "Player1 used blocks: ";
-    for (auto &bid : player1.used_blocks)
-        cout << bid << " ";
-    cout << endl;
-
-    cout << "Player2 used blocks: ";
-    for (auto &bid : player2.used_blocks)
-        cout << bid << " ";
-    cout << endl;
+    std::cout << "\n=== Final Board: PLAYER2 ===" << std::endl;
+    board.print_status(Color::PLAYER2);
 
     return 0;
 }
