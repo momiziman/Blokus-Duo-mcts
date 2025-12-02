@@ -518,7 +518,7 @@ vector<string> get_legal_block_types(Board &board, Color player_color, Player &p
 }
 
 // ランダムプレイアウト関数
-pair<int, int> random_playout(Board &board, Player &player1, Player &player2)
+pair<int, int> random_playout(Board &board, Player &player1, Player &player2) // MCTS時は&を消すこと！
 {
     // プレイヤー順番
     Color current_color = Color::PLAYER1;
