@@ -402,24 +402,33 @@ public:
     }
 };
 
-// 合法手リストを返す関数
-vector<tuple<string, int, int, int>> get_all_legal_moves(Board &board, Color player, const vector<string> &unused_blocks)
+// Player クラスを引数に取って合法手リストを返す関数
+vector<tuple<string, int, int, int>> get_all_legal_moves(Board &board, Color player_color, Player &player)
 {
-    vector<tuple<string, int, int, int>> legal_moves; // (block_id, x, y, rotation)
+    vector<tuple<string, int, int, int>> legal_moves;
 
+    // 使用済みブロックを除いた未使用ブロックリストを作成
+    vector<string> unused_blocks;
+    for (auto &[id, _] : block_table)
+    {
+        if (find(player.used_blocks.begin(), player.used_blocks.end(), id) == player.used_blocks.end())
+        {
+            unused_blocks.push_back(id);
+        }
+    }
+
+    // 未使用ブロックで合法手探索
     for (auto &block_id : unused_blocks)
     {
         BlockData data = getBlock(block_id);
         Block block(data);
 
-        // 0〜7 の回転・反転を試す
         for (int rot = 0; rot < 8; ++rot)
         {
             Block tmp_block = block;
             tmp_block.rotate_block(rot);
 
-            // 合法配置位置を探索
-            auto positions = board.search_settable_position(player, tmp_block.shape);
+            auto positions = board.search_settable_position(player_color, tmp_block.shape);
 
             for (auto &[x, y] : positions)
             {
@@ -429,6 +438,73 @@ vector<tuple<string, int, int, int>> get_all_legal_moves(Board &board, Color pla
     }
 
     return legal_moves;
+}
+
+// Player クラスの used_blocks を考慮して合法手リストを取得（x,yを除く）
+vector<pair<string, int>> get_legal_moves_no_pos(Board &board, Color player_color, Player &player)
+{
+    vector<pair<string, int>> legal_moves;
+
+    for (auto &[id, _] : block_table)
+    {
+        // 使用済みブロックはスキップ
+        if (find(player.used_blocks.begin(), player.used_blocks.end(), id) != player.used_blocks.end())
+            continue;
+
+        BlockData data = getBlock(id);
+        Block block(data);
+
+        for (int rot = 0; rot < 8; ++rot)
+        {
+            Block tmp_block = block;
+            tmp_block.rotate_block(rot);
+
+            // 置ける場所が1つでもあれば合法手とみなす
+            auto positions = board.search_settable_position(player_color, tmp_block.shape);
+            if (!positions.empty())
+            {
+                legal_moves.emplace_back(id, rot);
+            }
+        }
+    }
+
+    return legal_moves;
+}
+
+vector<string> get_legal_block_types(Board &board, Color player_color, Player &player)
+{
+    vector<string> legal_blocks;
+
+    for (auto &[id, _] : block_table)
+    {
+        // 使用済みブロックはスキップ
+        if (find(player.used_blocks.begin(), player.used_blocks.end(), id) != player.used_blocks.end())
+            continue;
+
+        BlockData data = getBlock(id);
+        Block block(data);
+
+        bool can_place = false;
+
+        // 8方向の回転をチェック
+        for (int rot = 0; rot < 8; ++rot)
+        {
+            Block tmp_block = block;
+            tmp_block.rotate_block(rot);
+
+            auto positions = board.search_settable_position(player_color, tmp_block.shape);
+            if (!positions.empty())
+            {
+                can_place = true;
+                break; // 1つでも置ければ十分
+            }
+        }
+
+        if (can_place)
+            legal_blocks.push_back(id);
+    }
+
+    return legal_blocks;
 }
 
 int main()
@@ -479,22 +555,22 @@ int main()
     // --- Board生成 ---
     Board board(TILE_NUMBER, input_board);
 
-    vector<string> unused_blocks = {"a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u"};
+    Player player1;
+    player1.color = Color::PLAYER1;
+    // player1.used_blocks.push_back("a"); // 例：既使用ブロック
 
-    // 合法手リストを取得
-    auto legal_moves = get_all_legal_moves(board, Color::PLAYER1, unused_blocks);
+    auto legal_blocks = get_legal_block_types(board, Color::PLAYER1, player1);
 
-    // 結果表示
-    if (legal_moves.empty())
+    if (legal_blocks.empty())
     {
-        cout << "No legal moves available.\n";
+        cout << "No legal blocks available.\n";
     }
     else
     {
-        cout << "Legal moves (block_id, x, y, rotation):\n";
-        for (auto &[bid, x, y, rot] : legal_moves)
+        cout << "Legal blocks:\n";
+        for (auto &bid : legal_blocks)
         {
-            cout << bid << " " << x << " " << y << " " << rot << "\n";
+            cout << bid << "\n";
         }
     }
 
