@@ -402,6 +402,35 @@ public:
     }
 };
 
+// 合法手リストを返す関数
+vector<tuple<string, int, int, int>> get_all_legal_moves(Board &board, Color player, const vector<string> &unused_blocks)
+{
+    vector<tuple<string, int, int, int>> legal_moves; // (block_id, x, y, rotation)
+
+    for (auto &block_id : unused_blocks)
+    {
+        BlockData data = getBlock(block_id);
+        Block block(data);
+
+        // 0〜7 の回転・反転を試す
+        for (int rot = 0; rot < 8; ++rot)
+        {
+            Block tmp_block = block;
+            tmp_block.rotate_block(rot);
+
+            // 合法配置位置を探索
+            auto positions = board.search_settable_position(player, tmp_block.shape);
+
+            for (auto &[x, y] : positions)
+            {
+                legal_moves.emplace_back(block_id, x, y, rot);
+            }
+        }
+    }
+
+    return legal_moves;
+}
+
 int main()
 {
     // memo // player.used_blocks.push_back(block_id);
@@ -450,31 +479,12 @@ int main()
     // --- Board生成 ---
     Board board(TILE_NUMBER, input_board);
 
-    // --- テストするブロック種類リスト ---
-    vector<string> test_blocks = {"a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u"};
+    vector<string> unused_blocks = {"a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u"};
 
-    vector<tuple<string, int, int, int>> legal_moves; // (block_id, x, y, rotation)
+    // 合法手リストを取得
+    auto legal_moves = get_all_legal_moves(board, Color::PLAYER1, unused_blocks);
 
-    for (auto &block_id : test_blocks)
-    {
-        BlockData data = getBlock(block_id);
-        Block block(data);
-
-        for (int rot = 0; rot < 8; ++rot)
-        {
-            Block tmp_block = block;
-            tmp_block.rotate_block(rot);
-
-            auto positions = board.search_settable_position(Color::PLAYER1, tmp_block.shape);
-
-            for (auto &[x, y] : positions)
-            {
-                legal_moves.emplace_back(block_id, x, y, rot);
-            }
-        }
-    }
-
-    // --- 結果表示 ---
+    // 結果表示
     if (legal_moves.empty())
     {
         cout << "No legal moves available.\n";
