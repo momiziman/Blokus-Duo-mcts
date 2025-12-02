@@ -245,7 +245,7 @@ struct Player
 {
     Color color;
     vector<string> used_blocks; // 使用済みブロックIDを記録
-    // そのほかプレイヤー情報
+    int score = 0;
 };
 
 class Board
@@ -321,23 +321,29 @@ public:
         return res;
     }
 
+    // Boardクラス内
     void change_status(Color color,
-                       const vector<vector<int>> &block_shape,
-                       const vector<vector<int>> &block_influence,
-                       int x, int y)
+                       Block &block, // Blockオブジェクトを直接渡す
+                       const std::string &block_id,
+                       int rotation, // 追加: 0〜7 の回転番号
+                       int x, int y,
+                       Player &player)
     {
-        int H = status[0].size();    // board height
-        int W = status[0][0].size(); // board width
+        // 回転を適用
+        block.rotate_block(rotation);
 
-        int I = block_influence.size();
-        int S = block_shape.size();
+        // --- 自分の盤面へ influence を適用 ---
+        int H = status[0].size();
+        int W = status[0][0].size();
+
+        int I = block.influence.size();
+        int S = block.shape.size();
 
         auto in_bounds = [&](int yy, int xx)
         {
             return (0 <= yy && yy < H && 0 <= xx && xx < W);
         };
 
-        // --- 自分の盤面へ influence を適用 ---
         for (int r = 0; r < I; r++)
         {
             for (int c = 0; c < I; c++)
@@ -348,17 +354,10 @@ public:
                 if (!in_bounds(yy, xx))
                     continue;
 
-                if (block_influence[r][c] == CANTSET)
-                {
+                if (block.influence[r][c] == CANTSET)
                     status[(int)color][yy][xx] = CANTSET;
-                }
-                else if (block_influence[r][c] == ABLESET)
-                {
-                    if (status[(int)color][yy][xx] == BLANK)
-                    {
-                        status[(int)color][yy][xx] = ABLESET;
-                    }
-                }
+                else if (block.influence[r][c] == ABLESET && status[(int)color][yy][xx] == BLANK)
+                    status[(int)color][yy][xx] = ABLESET;
             }
         }
 
@@ -372,7 +371,7 @@ public:
             {
                 for (int c = 0; c < S; c++)
                 {
-                    if (block_shape[r][c] != CANTSET)
+                    if (block.shape[r][c] != CANTSET)
                         continue;
 
                     int yy = y + r - 2;
@@ -384,6 +383,16 @@ public:
                     status[opponent][yy][xx] = CANTSET;
                 }
             }
+        }
+
+        // --- used_blocks に追加 ---
+        player.used_blocks.push_back(block_id);
+
+        // --- スコア加算 ---
+        auto it = block_table.find(block_id);
+        if (it != block_table.end())
+        {
+            player.score += it->second.score; // BlockData の score を加算
         }
     }
 
@@ -507,6 +516,50 @@ vector<string> get_legal_block_types(Board &board, Color player_color, Player &p
     return legal_blocks;
 }
 
+// ランダムプレイアウト関数
+pair<int, int> random_playout(Board board, Player player1, Player player2)
+{
+    // プレイヤー順番
+    Color current_color = Color::PLAYER1;
+
+    std::random_device rd;
+    std::mt19937 gen(rd());
+
+    while (true)
+    {
+        Player *current_player = (current_color == Color::PLAYER1) ? &player1 : &player2;
+
+        // 現在プレイヤーの合法手を取得
+        auto legal_moves = get_all_legal_moves(board, current_color, *current_player);
+
+        if (!legal_moves.empty())
+        {
+            // ランダムに1手選択
+            std::uniform_int_distribution<> dis(0, legal_moves.size() - 1);
+            int idx = dis(gen);
+
+            auto [block_id, x, y, rot] = legal_moves[idx];
+            BlockData data = getBlock(block_id);
+            Block block(data);
+
+            // 盤面を更新（スコアも更新される前提）
+            board.change_status(current_color, block, block_id, rot, x, y, *current_player);
+        }
+
+        // 次のプレイヤーに交代
+        current_color = (current_color == Color::PLAYER1) ? Color::PLAYER2 : Color::PLAYER1;
+
+        // 両プレイヤーとも合法手がなくなった場合、終了
+        auto legal_p1 = get_all_legal_moves(board, Color::PLAYER1, player1);
+        auto legal_p2 = get_all_legal_moves(board, Color::PLAYER2, player2);
+        if (legal_p1.empty() && legal_p2.empty())
+            break;
+    }
+
+    // 最終スコアを返す
+    return {player1.score, player2.score};
+}
+
 int main()
 {
     // memo // player.used_blocks.push_back(block_id);
@@ -526,9 +579,9 @@ int main()
             {1, 0, 0, 2, 1, 1, 1, 2, 0, 0, 0, 0, 0, 0, 0, 1},
             {1, 0, 0, 0, 2, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 1},
             {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-            {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-            {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-            {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+            {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1},
+            {1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1},
+            {1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1},
             {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
             {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
             {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
@@ -539,9 +592,9 @@ int main()
             {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
             {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
             {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-            {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-            {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-            {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+            {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+            {1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+            {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
             {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
             {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 1, 2, 0, 0, 1},
             {1, 0, 0, 0, 0, 0, 0, 0, 2, 1, 1, 1, 1, 0, 0, 1},
@@ -555,24 +608,72 @@ int main()
     // --- Board生成 ---
     Board board(TILE_NUMBER, input_board);
 
-    Player player1;
-    player1.color = Color::PLAYER1;
-    player1.used_blocks = {"a", "c", "k", "u"};
+    // --- プレイヤー初期化 ---
+    Player player1{Color::PLAYER1, {"u"}};
+    Player player2{Color::PLAYER2, {"s"}};
 
-    auto legal_blocks = get_legal_block_types(board, Color::PLAYER1, player1);
+    // --- プレイヤー1の合法手取得 ---
+    auto legal_moves_p1 = get_all_legal_moves(board, player1.color, player1);
 
-    if (legal_blocks.empty())
+    if (!legal_moves_p1.empty())
     {
-        cout << "No legal blocks available.\n";
+        std::random_device rd;
+        std::mt19937 gen(rd());
+        std::uniform_int_distribution<> dis(0, legal_moves_p1.size() - 1);
+        int idx = dis(gen);
+
+        auto [block_id, x, y, rot] = legal_moves_p1[idx];
+        BlockData data = getBlock(block_id);
+        Block block(data);
+
+        board.change_status(player1.color, block, block_id, rot, x, y, player1);
+        cout << "Board status (Player1):\n";
+        board.print_status(player1.color);
+
+        cout << "Player1 placed block " << block_id << " at (" << x << "," << y << ") with rotation " << rot << "\n";
     }
     else
     {
-        cout << "Legal blocks:\n";
-        for (auto &bid : legal_blocks)
-        {
-            cout << bid << "\n";
-        }
+        cout << "Player1 has no legal moves.\n";
     }
+
+    // --- プレイヤー2の合法手取得 ---
+    auto legal_moves_p2 = get_all_legal_moves(board, player2.color, player2);
+
+    if (!legal_moves_p2.empty())
+    {
+        std::random_device rd;
+        std::mt19937 gen(rd());
+        std::uniform_int_distribution<> dis(0, legal_moves_p2.size() - 1);
+        int idx = dis(gen);
+
+        auto [block_id, x, y, rot] = legal_moves_p2[idx];
+        BlockData data = getBlock(block_id);
+        Block block(data);
+
+        board.change_status(player2.color, block, block_id, rot, x, y, player2);
+
+        cout << "Player2 placed block " << block_id << " at (" << x << "," << y << ") with rotation " << rot << "\n";
+    }
+    else
+    {
+        cout << "Player2 has no legal moves.\n";
+    }
+
+    // --- 盤面表示 ---
+    cout << "Board status (Player2):\n";
+    board.print_status(player2.color);
+
+    // --- used_blocks 確認 ---
+    cout << "Player1 used blocks: ";
+    for (auto &bid : player1.used_blocks)
+        cout << bid << " ";
+    cout << endl;
+
+    cout << "Player2 used blocks: ";
+    for (auto &bid : player2.used_blocks)
+        cout << bid << " ";
+    cout << endl;
 
     return 0;
 }
