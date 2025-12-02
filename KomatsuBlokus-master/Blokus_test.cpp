@@ -557,7 +557,7 @@ int main()
 
     Player player1;
     player1.color = Color::PLAYER1;
-    // player1.used_blocks.push_back("a"); // 例：既使用ブロック
+    player1.used_blocks = {"a", "c", "k", "u"};
 
     auto legal_blocks = get_legal_block_types(board, Color::PLAYER1, player1);
 
