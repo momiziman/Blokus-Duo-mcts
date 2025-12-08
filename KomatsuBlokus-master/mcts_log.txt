@@ -1,0 +1,67 @@
+=== Logging started ===
+=== Starting MCTS debug ===
+[EXPAND] Expanding move: q (7,6) rot=2
+[EXPAND] Created child: 1257698611296
+Expanded node #1
+[SIMULATE] start
+----- NODE INFO -----
+Node ptr: 1257698611296
+Parent : 13381924512
+Children: 0
+Visits: 0
+Wins: 0.000000
+Move: q (7,6) rot=2
+Untried moves: 0
+----------------------
+[SIMULATE] score1=55 score2=51 result=1.000000
+Simulation result: 1.000000
+[BACKPROP] Result=1.000000
+Update node 1257698611296 Before: W=0.000000 V=0
+ After: W=1.000000 V=1
+Update node 13381924512 Before: W=0.000000 V=0
+ After: W=1.000000 V=1
+Backpropagation done for node #1
+[EXPAND] Expanding move: r (2,3) rot=7
+[EXPAND] Created child: 1257698598144
+Expanded node #2
+[SIMULATE] start
+----- NODE INFO -----
+Node ptr: 1257698598144
+Parent : 13381924512
+Children: 0
+Visits: 0
+Wins: 0.000000
+Move: r (2,3) rot=7
+Untried moves: 0
+----------------------
+[SIMULATE] score1=56 score2=46 result=1.000000
+Simulation result: 1.000000
+[BACKPROP] Result=1.000000
+Update node 1257698598144 Before: W=0.000000 V=0
+ After: W=1.000000 V=1
+Update node 13381924512 Before: W=1.000000 V=1
+ After: W=2.000000 V=2
+Backpropagation done for node #2
+[EXPAND] Expanding move: i (2,3) rot=3
+[EXPAND] Created child: 1257698976976
+Expanded node #3
+[SIMULATE] start
+----- NODE INFO -----
+Node ptr: 1257698976976
+Parent : 13381924512
+Children: 0
+Visits: 0
+Wins: 0.000000
+Move: i (2,3) rot=3
+Untried moves: 0
+----------------------
+[SIMULATE] score1=54 score2=52 result=1.000000
+Simulation result: 1.000000
+[BACKPROP] Result=1.000000
+Update node 1257698976976 Before: W=0.000000 V=0
+ After: W=1.000000 V=1
+Update node 13381924512 Before: W=2.000000 V=2
+ After: W=3.000000 V=3
+Backpropagation done for node #3
+=== MCTS debug finished ===
+=== Logging ended ===
