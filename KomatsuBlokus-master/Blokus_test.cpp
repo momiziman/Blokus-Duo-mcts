@@ -874,9 +874,9 @@ struct MCTSNode {
                    C * std::sqrt(std::log(visit_count + 1) /
                                  (child->visit_count + 1e-6));
 
-      MCTSLogger::writeln(" UCB=" + std::to_string(ucb) +
+      /*MCTSLogger::writeln(" UCB=" + std::to_string(ucb) +
                           " W=" + std::to_string(child->win_score) +
-                          " V=" + std::to_string(child->visit_count));
+                          " V=" + std::to_string(child->visit_count)); */
 
       if (ucb > best_value) {
         best_value = ucb;
@@ -900,9 +900,9 @@ struct MCTSNode {
     int idx = dis(gen);
     auto [block_id, x, y, rot] = untried_moves[idx];
 
-    MCTSLogger::writeln("[EXPAND] Expanding move: " + block_id + " (" +
+    /*  MCTSLogger::writeln("[EXPAND] Expanding move: " + block_id + " (" +
                         std::to_string(x) + "," + std::to_string(y) +
-                        ") rot=" + std::to_string(rot));
+                        ") rot=" + std::to_string(rot));  */
 
     // 選んだ手を未展開リストから削除
     untried_moves.erase(untried_moves.begin() + idx);
@@ -942,15 +942,15 @@ struct MCTSNode {
     child->untried_moves =
         get_all_legal_moves(child->board, next_turn, *next_player);
 
-    MCTSLogger::writeln("[EXPAND] child->untried_moves = " +
-                        std::to_string(child->untried_moves.size()));
+    /*  MCTSLogger::writeln("[EXPAND] child->untried_moves = " +
+                        std::to_string(child->untried_moves.size())); */
 
     return child;
   }
 
   // --- Simulation: playout の呼び出し ---
   double simulate() {
-    MCTSLogger::writeln("[SIMULATE] start");
+    /*  MCTSLogger::writeln("[SIMULATE] start");  */
     log_node_basic(this);
 
     Board sim_board = board;
@@ -961,27 +961,27 @@ struct MCTSNode {
 
     double result = (score1 > score2) ? 1.0 : (score1 == score2 ? 0.5 : 0.0);
 
-    MCTSLogger::writeln("[SIMULATE] score1=" + std::to_string(score1) +
+    /*  MCTSLogger::writeln("[SIMULATE] score1=" + std::to_string(score1) +
                         " score2=" + std::to_string(score2) +
-                        " result=" + std::to_string(result));
+                        " result=" + std::to_string(result)); */
 
     return result;
   }
 
   // --- Backpropagation ---
   void backpropagate(double result) {
-    MCTSLogger::writeln("[BACKPROP] Result=" + std::to_string(result));
+    /*  MCTSLogger::writeln("[BACKPROP] Result=" + std::to_string(result)); */
 
     MCTSNode *node = this;
     while (node != nullptr) {
-      MCTSLogger::writeln(" Before: W=" + std::to_string(node->win_score) +
-                          " V=" + std::to_string(node->visit_count));
+      /*  MCTSLogger::writeln(" Before: W=" + std::to_string(node->win_score) +
+                          " V=" + std::to_string(node->visit_count)); */
 
       node->visit_count++;
       node->win_score += result;
 
-      MCTSLogger::writeln(" After: W=" + std::to_string(node->win_score) +
-                          " V=" + std::to_string(node->visit_count));
+      /*  MCTSLogger::writeln(" After: W=" + std::to_string(node->win_score) +
+                          " V=" + std::to_string(node->visit_count));  */
 
       node = node->parent;
     }
@@ -1142,28 +1142,31 @@ int main() {
                       std::to_string(root->untried_moves.size()));
 
   // --- MCTS 反復 ---
-  const int ITER = 20;
+  const int ITER = 2000;
   for (int i = 0; i < ITER; ++i) {
-    MCTSLogger::writeln("\n=== Iteration " + std::to_string(i + 1) + " ===");
+    /*  MCTSLogger::writeln("\n=== Iteration " + std::to_string(i + 1) + "
+     * ==="); */
 
     // ----- 1. Selection -----
     MCTSNode *node = root;
     while (node->untried_moves.empty() && !node->children.empty()) {
       node = node->select_child(); // ★UCB1で選択
-      MCTSLogger::writeln("[SELECT] moved to node: " + node->move_block_id);
+      /*  MCTSLogger::writeln("[SELECT] moved to node: " + node->move_block_id);
+       */
     }
 
     // ----- 2. Expansion -----
     MCTSNode *expanded = nullptr;
     if (!node->untried_moves.empty()) {
       expanded = node->expand_node();
-      MCTSLogger::writeln("[EXPAND] expanded move=" + expanded->move_block_id);
+      /*  MCTSLogger::writeln("[EXPAND] expanded move=" +
+       * expanded->move_block_id); */
       node = expanded;
     }
 
     // ----- 3. Simulation -----
     double result = node->simulate();
-    MCTSLogger::writeln("[SIMULATE] result=" + std::to_string(result));
+    /*  MCTSLogger::writeln("[SIMULATE] result=" + std::to_string(result)); */
 
     // ----- 4. Backpropagation -----
     node->backpropagate(result);
@@ -1173,13 +1176,13 @@ int main() {
   MCTSLogger::writeln("\n=== Tree summary ===");
   MCTSLogger::writeln("Root visits=" + std::to_string(root->visit_count));
 
-  for (size_t i = 0; i < root->children.size(); ++i) {
+  /*  for (size_t i = 0; i < root->children.size(); ++i) {
     MCTSNode *c = root->children[i];
     MCTSLogger::writeln(" Child #" + std::to_string(i + 1) +
                         " move=" + c->move_block_id +
                         " V=" + std::to_string(c->visit_count) +
                         " W=" + std::to_string(c->win_score));
-  }
+  } */
 
   // メモリ解放
   delete_subtree(root);
