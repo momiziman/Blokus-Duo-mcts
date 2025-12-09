@@ -1,0 +1,1523 @@
+=== Logging started ===
+=== Starting MCTS debug ===
+[EXPAND] Expanding move: q (7,6) rot=2
+[EXPAND] Created child: 1257698611296
+Expanded node #1
+[SIMULATE] start
+----- NODE INFO -----
+Node ptr: 1257698611296
+Parent : 13381924512
+Children: 0
+Visits: 0
+Wins: 0.000000
+Move: q (7,6) rot=2
+Untried moves: 0
+----------------------
+[SIMULATE] score1=55 score2=51 result=1.000000
+Simulation result: 1.000000
+[BACKPROP] Result=1.000000
+Update node 1257698611296 Before: W=0.000000 V=0
+ After: W=1.000000 V=1
+Update node 13381924512 Before: W=0.000000 V=0
+ After: W=1.000000 V=1
+Backpropagation done for node #1
+[EXPAND] Expanding move: r (2,3) rot=7
+[EXPAND] Created child: 1257698598144
+Expanded node #2
+[SIMULATE] start
+----- NODE INFO -----
+Node ptr: 1257698598144
+Parent : 13381924512
+Children: 0
+Visits: 0
+Wins: 0.000000
+Move: r (2,3) rot=7
+Untried moves: 0
+----------------------
+[SIMULATE] score1=56 score2=46 result=1.000000
+Simulation result: 1.000000
+[BACKPROP] Result=1.000000
+Update node 1257698598144 Before: W=0.000000 V=0
+ After: W=1.000000 V=1
+Update node 13381924512 Before: W=1.000000 V=1
+ After: W=2.000000 V=2
+Backpropagation done for node #2
+[EXPAND] Expanding move: i (2,3) rot=3
+[EXPAND] Created child: 1257698976976
+Expanded node #3
+[SIMULATE] start
+----- NODE INFO -----
+Node ptr: 1257698976976
+Parent : 13381924512
+Children: 0
+Visits: 0
+Wins: 0.000000
+Move: i (2,3) rot=3
+Untried moves: 0
+----------------------
+[SIMULATE] score1=54 score2=52 result=1.000000
+Simulation result: 1.000000
+[BACKPROP] Result=1.000000
+Update node 1257698976976 Before: W=0.000000 V=0
+ After: W=1.000000 V=1
+Update node 13381924512 Before: W=2.000000 V=2
+ After: W=3.000000 V=3
+Backpropagation done for node #3
+=== MCTS debug finished ===
+=== Logging ended ===
+=== Logging started ===
+=== Starting MCTS debug ===
+[EXPAND] Expanding move: o (6,8) rot=6
+[EXPAND] Created child: 1791436400496
+Expanded node #1
+[SIMULATE] start
+----- NODE INFO -----
+Node ptr: 1791436400496
+Parent : 27931966336
+Children: 0
+Visits: 0
+Wins: 0.000000
+Move: o (6,8) rot=6
+Untried moves: 0
+----------------------
+[SIMULATE] score1=46 score2=47 result=0.000000
+Simulation result: 0.000000
+[BACKPROP] Result=0.000000
+Update node 1791436400496 Before: W=0.000000 V=0
+ After: W=0.000000 V=1
+Update node 27931966336 Before: W=0.000000 V=0
+ After: W=0.000000 V=1
+Backpropagation done for node #1
+[EXPAND] Expanding move: o (8,7) rot=7
+[EXPAND] Created child: 1791436234816
+Expanded node #2
+[SIMULATE] start
+----- NODE INFO -----
+Node ptr: 1791436234816
+Parent : 27931966336
+Children: 0
+Visits: 0
+Wins: 0.000000
+Move: o (8,7) rot=7
+Untried moves: 0
+----------------------
+[SIMULATE] score1=51 score2=46 result=1.000000
+Simulation result: 1.000000
+[BACKPROP] Result=1.000000
+Update node 1791436234816 Before: W=0.000000 V=0
+ After: W=1.000000 V=1
+Update node 27931966336 Before: W=0.000000 V=1
+ After: W=1.000000 V=2
+Backpropagation done for node #2
+[EXPAND] Expanding move: o (4,8) rot=0
+[EXPAND] Created child: 1791436611488
+Expanded node #3
+[SIMULATE] start
+----- NODE INFO -----
+Node ptr: 1791436611488
+Parent : 27931966336
+Children: 0
+Visits: 0
+Wins: 0.000000
+Move: o (4,8) rot=0
+Untried moves: 0
+----------------------
+[SIMULATE] score1=54 score2=44 result=1.000000
+Simulation result: 1.000000
+[BACKPROP] Result=1.000000
+Update node 1791436611488 Before: W=0.000000 V=0
+ After: W=1.000000 V=1
+Update node 27931966336 Before: W=1.000000 V=2
+ After: W=2.000000 V=3
+Backpropagation done for node #3
+=== MCTS debug finished ===
+=== Logging ended ===
+=== Logging started ===
+=== Starting node-management test ===
+Root untried_moves=1384
+[EXPAND] Expanding move: r (4,2) rot=2
+[EXPAND] Created child: 1848675407552
+[EXPAND] child->untried_moves = 1080
+[TEST] Expanded child pointer=1848675407552 child_untried=1080
+[SIMULATE] start
+----- NODE INFO -----
+Node ptr: 1848675407552
+Parent : 1848675246144
+Children: 0
+Visits: 0
+Wins: 0.000000
+Move: r (4,2) rot=2
+Untried moves: 1080
+----------------------
+[SIMULATE] score1=49 score2=60 result=0.000000
+[BACKPROP] Result=0.000000
+Update node 1848675407552 Before: W=0.000000 V=0
+ After: W=0.000000 V=1
+Update node 1848675246144 Before: W=0.000000 V=0
+ After: W=0.000000 V=1
+[EXPAND] Expanding move: m (4,2) rot=4
+[EXPAND] Created child: 1848675617312
+[EXPAND] child->untried_moves = 1080
+[TEST] Expanded child pointer=1848675617312 child_untried=1080
+[SIMULATE] start
+----- NODE INFO -----
+Node ptr: 1848675617312
+Parent : 1848675246144
+Children: 0
+Visits: 0
+Wins: 0.000000
+Move: m (4,2) rot=4
+Untried moves: 1080
+----------------------
+[SIMULATE] score1=55 score2=48 result=1.000000
+[BACKPROP] Result=1.000000
+Update node 1848675617312 Before: W=0.000000 V=0
+ After: W=1.000000 V=1
+Update node 1848675246144 Before: W=0.000000 V=1
+ After: W=1.000000 V=2
+[EXPAND] Expanding move: i (3,7) rot=2
+[EXPAND] Created child: 1848675621824
+[EXPAND] child->untried_moves = 1080
+[TEST] Expanded child pointer=1848675621824 child_untried=1080
+[SIMULATE] start
+----- NODE INFO -----
+Node ptr: 1848675621824
+Parent : 1848675246144
+Children: 0
+Visits: 0
+Wins: 0.000000
+Move: i (3,7) rot=2
+Untried moves: 1080
+----------------------
+[SIMULATE] score1=41 score2=50 result=0.000000
+[BACKPROP] Result=0.000000
+Update node 1848675621824 Before: W=0.000000 V=0
+ After: W=0.000000 V=1
+Update node 1848675246144 Before: W=1.000000 V=2
+ After: W=1.000000 V=3
+[EXPAND] Expanding move: d (7,7) rot=0
+[EXPAND] Created child: 1848675631808
+[EXPAND] child->untried_moves = 983
+[TEST] Expanded child pointer=1848675631808 child_untried=983
+[SIMULATE] start
+----- NODE INFO -----
+Node ptr: 1848675631808
+Parent : 1848675246144
+Children: 0
+Visits: 0
+Wins: 0.000000
+Move: d (7,7) rot=0
+Untried moves: 983
+----------------------
+[SIMULATE] score1=54 score2=40 result=1.000000
+[BACKPROP] Result=1.000000
+Update node 1848675631808 Before: W=0.000000 V=0
+ After: W=1.000000 V=1
+Update node 1848675246144 Before: W=1.000000 V=3
+ After: W=2.000000 V=4
+[EXPAND] Expanding move: r (6,8) rot=5
+[EXPAND] Created child: 1848675632064
+[EXPAND] child->untried_moves = 1006
+[TEST] Expanded child pointer=1848675632064 child_untried=1006
+[SIMULATE] start
+----- NODE INFO -----
+Node ptr: 1848675632064
+Parent : 1848675246144
+Children: 0
+Visits: 0
+Wins: 0.000000
+Move: r (6,8) rot=5
+Untried moves: 1006
+----------------------
+[SIMULATE] score1=42 score2=38 result=1.000000
+[BACKPROP] Result=1.000000
+Update node 1848675632064 Before: W=0.000000 V=0
+ After: W=1.000000 V=1
+Update node 1848675246144 Before: W=2.000000 V=4
+ After: W=3.000000 V=5
+[EXPAND] Expanding move: s (8,3) rot=1
+[EXPAND] Created child: 1848675510368
+[EXPAND] child->untried_moves = 1080
+[TEST] Expanded child pointer=1848675510368 child_untried=1080
+[SIMULATE] start
+----- NODE INFO -----
+Node ptr: 1848675510368
+Parent : 1848675246144
+Children: 0
+Visits: 0
+Wins: 0.000000
+Move: s (8,3) rot=1
+Untried moves: 1080
+----------------------
+[SIMULATE] score1=50 score2=52 result=0.000000
+[BACKPROP] Result=0.000000
+Update node 1848675510368 Before: W=0.000000 V=0
+ After: W=0.000000 V=1
+Update node 1848675246144 Before: W=3.000000 V=5
+ After: W=3.000000 V=6
+[EXPAND] Expanding move: b (7,3) rot=5
+[EXPAND] Created child: 1848675624288
+[EXPAND] child->untried_moves = 1080
+[TEST] Expanded child pointer=1848675624288 child_untried=1080
+[SIMULATE] start
+----- NODE INFO -----
+Node ptr: 1848675624288
+Parent : 1848675246144
+Children: 0
+Visits: 0
+Wins: 0.000000
+Move: b (7,3) rot=5
+Untried moves: 1080
+----------------------
+[SIMULATE] score1=60 score2=45 result=1.000000
+[BACKPROP] Result=1.000000
+Update node 1848675624288 Before: W=0.000000 V=0
+ After: W=1.000000 V=1
+Update node 1848675246144 Before: W=3.000000 V=6
+ After: W=4.000000 V=7
+[EXPAND] Expanding move: p (7,3) rot=6
+[EXPAND] Created child: 1848675624544
+[EXPAND] child->untried_moves = 1080
+[TEST] Expanded child pointer=1848675624544 child_untried=1080
+[SIMULATE] start
+----- NODE INFO -----
+Node ptr: 1848675624544
+Parent : 1848675246144
+Children: 0
+Visits: 0
+Wins: 0.000000
+Move: p (7,3) rot=6
+Untried moves: 1080
+----------------------
+[SIMULATE] score1=56 score2=47 result=1.000000
+[BACKPROP] Result=1.000000
+Update node 1848675624544 Before: W=0.000000 V=0
+ After: W=1.000000 V=1
+Update node 1848675246144 Before: W=4.000000 V=7
+ After: W=5.000000 V=8
+[EXPAND] Expanding move: h (3,6) rot=5
+[EXPAND] Created child: 1848675624800
+[EXPAND] child->untried_moves = 1080
+[TEST] Expanded child pointer=1848675624800 child_untried=1080
+[SIMULATE] start
+----- NODE INFO -----
+Node ptr: 1848675624800
+Parent : 1848675246144
+Children: 0
+Visits: 0
+Wins: 0.000000
+Move: h (3,6) rot=5
+Untried moves: 1080
+----------------------
+[SIMULATE] score1=52 score2=50 result=1.000000
+[BACKPROP] Result=1.000000
+Update node 1848675624800 Before: W=0.000000 V=0
+ After: W=1.000000 V=1
+Update node 1848675246144 Before: W=5.000000 V=8
+ After: W=6.000000 V=9
+[EXPAND] Expanding move: e (8,7) rot=7
+[EXPAND] Created child: 1848675625408
+[EXPAND] child->untried_moves = 921
+[TEST] Expanded child pointer=1848675625408 child_untried=921
+[SIMULATE] start
+----- NODE INFO -----
+Node ptr: 1848675625408
+Parent : 1848675246144
+Children: 0
+Visits: 0
+Wins: 0.000000
+Move: e (8,7) rot=7
+Untried moves: 921
+----------------------
+[SIMULATE] score1=50 score2=56 result=0.000000
+[BACKPROP] Result=0.000000
+Update node 1848675625408 Before: W=0.000000 V=0
+ After: W=0.000000 V=1
+Update node 1848675246144 Before: W=6.000000 V=9
+ After: W=6.000000 V=10
+=== Tree summary ===
+Root children = 10
+ Child #1 ptr=1848675407552 move=r visits=1 wins=0.000000 untried=1080
+ Child #2 ptr=1848675617312 move=m visits=1 wins=1.000000 untried=1080
+ Child #3 ptr=1848675621824 move=i visits=1 wins=0.000000 untried=1080
+ Child #4 ptr=1848675631808 move=d visits=1 wins=1.000000 untried=983
+ Child #5 ptr=1848675632064 move=r visits=1 wins=1.000000 untried=1006
+ Child #6 ptr=1848675510368 move=s visits=1 wins=0.000000 untried=1080
+ Child #7 ptr=1848675624288 move=b visits=1 wins=1.000000 untried=1080
+ Child #8 ptr=1848675624544 move=p visits=1 wins=1.000000 untried=1080
+ Child #9 ptr=1848675624800 move=h visits=1 wins=1.000000 untried=1080
+ Child #10 ptr=1848675625408 move=e visits=1 wins=0.000000 untried=921
+=== node-management test finished ===
+=== Logging ended ===
+=== Logging started ===
+=== Starting node-management test ===
+Root untried_moves=1384
+[EXPAND] Expanding move: s (4,8) rot=7
+[EXPAND] child->untried_moves = 1065
+[TEST] Expanded child pointer=2795922988960 child_untried=1065
+[SIMULATE] start
+----- NODE INFO -----
+Node ptr: 2795922988960
+Parent : 2795922872800
+Children: 0
+Visits: 0
+Wins: 0.000000
+Move: s (4,8) rot=7
+Untried moves: 1065
+----------------------
+[SIMULATE] score1=60 score2=36 result=1.000000
+[BACKPROP] Result=1.000000
+Update node 2795922988960 Before: W=0.000000 V=0
+ After: W=1.000000 V=1
+Update node 2795922872800 Before: W=0.000000 V=0
+ After: W=1.000000 V=1
+[EXPAND] Expanding move: t (6,8) rot=6
+[EXPAND] child->untried_moves = 944
+[TEST] Expanded child pointer=2795922991760 child_untried=944
+[SIMULATE] start
+----- NODE INFO -----
+Node ptr: 2795922991760
+Parent : 2795922872800
+Children: 0
+Visits: 0
+Wins: 0.000000
+Move: t (6,8) rot=6
+Untried moves: 944
+----------------------
+[SIMULATE] score1=56 score2=54 result=1.000000
+[BACKPROP] Result=1.000000
+Update node 2795922991760 Before: W=0.000000 V=0
+ After: W=1.000000 V=1
+Update node 2795922872800 Before: W=1.000000 V=1
+ After: W=2.000000 V=2
+[EXPAND] Expanding move: s (3,3) rot=6
+[EXPAND] child->untried_moves = 1080
+[TEST] Expanded child pointer=2795923099728 child_untried=1080
+[SIMULATE] start
+----- NODE INFO -----
+Node ptr: 2795923099728
+Parent : 2795922872800
+Children: 0
+Visits: 0
+Wins: 0.000000
+Move: s (3,3) rot=6
+Untried moves: 1080
+----------------------
+[SIMULATE] score1=35 score2=45 result=0.000000
+[BACKPROP] Result=0.000000
+Update node 2795923099728 Before: W=0.000000 V=0
+ After: W=0.000000 V=1
+Update node 2795922872800 Before: W=2.000000 V=2
+ After: W=2.000000 V=3
+[EXPAND] Expanding move: i (3,7) rot=2
+[EXPAND] child->untried_moves = 1080
+[TEST] Expanded child pointer=2795923213616 child_untried=1080
+[SIMULATE] start
+----- NODE INFO -----
+Node ptr: 2795923213616
+Parent : 2795922872800
+Children: 0
+Visits: 0
+Wins: 0.000000
+Move: i (3,7) rot=2
+Untried moves: 1080
+----------------------
+[SIMULATE] score1=60 score2=45 result=1.000000
+[BACKPROP] Result=1.000000
+Update node 2795923213616 Before: W=0.000000 V=0
+ After: W=1.000000 V=1
+Update node 2795922872800 Before: W=2.000000 V=3
+ After: W=3.000000 V=4
+[EXPAND] Expanding move: e (7,7) rot=6
+[EXPAND] child->untried_moves = 921
+[TEST] Expanded child pointer=2795923002352 child_untried=921
+[SIMULATE] start
+----- NODE INFO -----
+Node ptr: 2795923002352
+Parent : 2795922872800
+Children: 0
+Visits: 0
+Wins: 0.000000
+Move: e (7,7) rot=6
+Untried moves: 921
+----------------------
+[SIMULATE] score1=55 score2=56 result=0.000000
+[BACKPROP] Result=0.000000
+Update node 2795923002352 Before: W=0.000000 V=0
+ After: W=0.000000 V=1
+Update node 2795922872800 Before: W=3.000000 V=4
+ After: W=3.000000 V=5
+[EXPAND] Expanding move: g (4,2) rot=2
+[EXPAND] child->untried_moves = 1080
+[TEST] Expanded child pointer=2795923006336 child_untried=1080
+[SIMULATE] start
+----- NODE INFO -----
+Node ptr: 2795923006336
+Parent : 2795922872800
+Children: 0
+Visits: 0
+Wins: 0.000000
+Move: g (4,2) rot=2
+Untried moves: 1080
+----------------------
+[SIMULATE] score1=64 score2=47 result=1.000000
+[BACKPROP] Result=1.000000
+Update node 2795923006336 Before: W=0.000000 V=0
+ After: W=1.000000 V=1
+Update node 2795922872800 Before: W=3.000000 V=5
+ After: W=4.000000 V=6
+[EXPAND] Expanding move: m (2,4) rot=4
+[EXPAND] child->untried_moves = 1080
+[TEST] Expanded child pointer=2795923006592 child_untried=1080
+[SIMULATE] start
+----- NODE INFO -----
+Node ptr: 2795923006592
+Parent : 2795922872800
+Children: 0
+Visits: 0
+Wins: 0.000000
+Move: m (2,4) rot=4
+Untried moves: 1080
+----------------------
+[SIMULATE] score1=47 score2=36 result=1.000000
+[BACKPROP] Result=1.000000
+Update node 2795923006592 Before: W=0.000000 V=0
+ After: W=1.000000 V=1
+Update node 2795922872800 Before: W=4.000000 V=6
+ After: W=5.000000 V=7
+[EXPAND] Expanding move: e (8,3) rot=7
+[EXPAND] child->untried_moves = 1080
+[TEST] Expanded child pointer=2795923004816 child_untried=1080
+[SIMULATE] start
+----- NODE INFO -----
+Node ptr: 2795923004816
+Parent : 2795922872800
+Children: 0
+Visits: 0
+Wins: 0.000000
+Move: e (8,3) rot=7
+Untried moves: 1080
+----------------------
+[SIMULATE] score1=54 score2=55 result=0.000000
+[BACKPROP] Result=0.000000
+Update node 2795923004816 Before: W=0.000000 V=0
+ After: W=0.000000 V=1
+Update node 2795922872800 Before: W=5.000000 V=7
+ After: W=5.000000 V=8
+[EXPAND] Expanding move: t (2,4) rot=0
+[EXPAND] child->untried_moves = 1080
+[TEST] Expanded child pointer=2795923005072 child_untried=1080
+[SIMULATE] start
+----- NODE INFO -----
+Node ptr: 2795923005072
+Parent : 2795922872800
+Children: 0
+Visits: 0
+Wins: 0.000000
+Move: t (2,4) rot=0
+Untried moves: 1080
+----------------------
+[SIMULATE] score1=46 score2=50 result=0.000000
+[BACKPROP] Result=0.000000
+Update node 2795923005072 Before: W=0.000000 V=0
+ After: W=0.000000 V=1
+Update node 2795922872800 Before: W=5.000000 V=8
+ After: W=5.000000 V=9
+[EXPAND] Expanding move: m (8,6) rot=6
+[EXPAND] child->untried_moves = 928
+[TEST] Expanded child pointer=2795923005328 child_untried=928
+[SIMULATE] start
+----- NODE INFO -----
+Node ptr: 2795923005328
+Parent : 2795922872800
+Children: 0
+Visits: 0
+Wins: 0.000000
+Move: m (8,6) rot=6
+Untried moves: 928
+----------------------
+[SIMULATE] score1=56 score2=42 result=1.000000
+[BACKPROP] Result=1.000000
+Update node 2795923005328 Before: W=0.000000 V=0
+ After: W=1.000000 V=1
+Update node 2795922872800 Before: W=5.000000 V=9
+ After: W=6.000000 V=10
+=== Tree summary ===
+Root children = 10
+ Child #1 ptr=2795922988960 move=s visits=1 wins=1.000000 untried=1065
+ Child #2 ptr=2795922991760 move=t visits=1 wins=1.000000 untried=944
+ Child #3 ptr=2795923099728 move=s visits=1 wins=0.000000 untried=1080
+ Child #4 ptr=2795923213616 move=i visits=1 wins=1.000000 untried=1080
+ Child #5 ptr=2795923002352 move=e visits=1 wins=0.000000 untried=921
+ Child #6 ptr=2795923006336 move=g visits=1 wins=1.000000 untried=1080
+ Child #7 ptr=2795923006592 move=m visits=1 wins=1.000000 untried=1080
+ Child #8 ptr=2795923004816 move=e visits=1 wins=0.000000 untried=1080
+ Child #9 ptr=2795923005072 move=t visits=1 wins=0.000000 untried=1080
+ Child #10 ptr=2795923005328 move=m visits=1 wins=1.000000 untried=928
+=== node-management test finished ===
+=== Logging ended ===
+=== Logging started ===
+=== Starting node-management test ===
+Root untried_moves=1384
+[EXPAND] Expanding move: q (3,6) rot=3
+[EXPAND] Created child: 1322614087648
+[EXPAND] child->untried_moves = 1080
+[TEST] Expanded child pointer=1322614087648 child_untried=1080
+[SIMULATE] start
+----- NODE INFO -----
+Node ptr: 1322614087648
+Parent : 1322613754176
+Children: 0
+Visits: 0
+Wins: 0.000000
+Move: q (3,6) rot=3
+Untried moves: 1080
+----------------------
+[SIMULATE] score1=55 score2=52 result=1.000000
+[BACKPROP] Result=1.000000
+Update node 1322614087648 Before: W=0.000000 V=0
+ After: W=1.000000 V=1
+Update node 1322613754176 Before: W=0.000000 V=0
+ After: W=1.000000 V=1
+[EXPAND] Expanding move: p (8,6) rot=6
+[EXPAND] Created child: 1322613890912
+[EXPAND] child->untried_moves = 967
+[TEST] Expanded child pointer=1322613890912 child_untried=967
+[SIMULATE] start
+----- NODE INFO -----
+Node ptr: 1322613890912
+Parent : 1322613754176
+Children: 0
+Visits: 0
+Wins: 0.000000
+Move: p (8,6) rot=6
+Untried moves: 967
+----------------------
+[SIMULATE] score1=50 score2=50 result=0.500000
+[BACKPROP] Result=0.500000
+Update node 1322613890912 Before: W=0.000000 V=0
+ After: W=0.500000 V=1
+Update node 1322613754176 Before: W=1.000000 V=1
+ After: W=1.500000 V=2
+[EXPAND] Expanding move: r (3,8) rot=5
+[EXPAND] Created child: 1322613895280
+[EXPAND] child->untried_moves = 1080
+[TEST] Expanded child pointer=1322613895280 child_untried=1080
+[SIMULATE] start
+----- NODE INFO -----
+Node ptr: 1322613895280
+Parent : 1322613754176
+Children: 0
+Visits: 0
+Wins: 0.000000
+Move: r (3,8) rot=5
+Untried moves: 1080
+----------------------
+[SIMULATE] score1=50 score2=45 result=1.000000
+[BACKPROP] Result=1.000000
+Update node 1322613895280 Before: W=0.000000 V=0
+ After: W=1.000000 V=1
+Update node 1322613754176 Before: W=1.500000 V=2
+ After: W=2.500000 V=3
+[EXPAND] Expanding move: m (2,7) rot=4
+[EXPAND] Created child: 1322613873408
+[EXPAND] child->untried_moves = 1080
+[TEST] Expanded child pointer=1322613873408 child_untried=1080
+[SIMULATE] start
+----- NODE INFO -----
+Node ptr: 1322613873408
+Parent : 1322613754176
+Children: 0
+Visits: 0
+Wins: 0.000000
+Move: m (2,7) rot=4
+Untried moves: 1080
+----------------------
+[SIMULATE] score1=46 score2=57 result=0.000000
+[BACKPROP] Result=0.000000
+Update node 1322613873408 Before: W=0.000000 V=0
+ After: W=0.000000 V=1
+Update node 1322613754176 Before: W=2.500000 V=3
+ After: W=2.500000 V=4
+[EXPAND] Expanding move: c (8,4) rot=7
+[EXPAND] Created child: 1322613877920
+[EXPAND] child->untried_moves = 1080
+[TEST] Expanded child pointer=1322613877920 child_untried=1080
+[SIMULATE] start
+----- NODE INFO -----
+Node ptr: 1322613877920
+Parent : 1322613754176
+Children: 0
+Visits: 0
+Wins: 0.000000
+Move: c (8,4) rot=7
+Untried moves: 1080
+----------------------
+[SIMULATE] score1=41 score2=47 result=0.000000
+[BACKPROP] Result=0.000000
+Update node 1322613877920 Before: W=0.000000 V=0
+ After: W=0.000000 V=1
+Update node 1322613754176 Before: W=2.500000 V=4
+ After: W=2.500000 V=5
+[EXPAND] Expanding move: f (3,7) rot=7
+[EXPAND] Created child: 1322613901712
+[EXPAND] child->untried_moves = 1080
+[TEST] Expanded child pointer=1322613901712 child_untried=1080
+[SIMULATE] start
+----- NODE INFO -----
+Node ptr: 1322613901712
+Parent : 1322613754176
+Children: 0
+Visits: 0
+Wins: 0.000000
+Move: f (3,7) rot=7
+Untried moves: 1080
+----------------------
+[SIMULATE] score1=42 score2=55 result=0.000000
+[BACKPROP] Result=0.000000
+Update node 1322613901712 Before: W=0.000000 V=0
+ After: W=0.000000 V=1
+Update node 1322613754176 Before: W=2.500000 V=5
+ After: W=2.500000 V=6
+[EXPAND] Expanding move: r (2,3) rot=3
+[EXPAND] Created child: 1322613901968
+[EXPAND] child->untried_moves = 1080
+[TEST] Expanded child pointer=1322613901968 child_untried=1080
+[SIMULATE] start
+----- NODE INFO -----
+Node ptr: 1322613901968
+Parent : 1322613754176
+Children: 0
+Visits: 0
+Wins: 0.000000
+Move: r (2,3) rot=3
+Untried moves: 1080
+----------------------
+[SIMULATE] score1=51 score2=60 result=0.000000
+[BACKPROP] Result=0.000000
+Update node 1322613901968 Before: W=0.000000 V=0
+ After: W=0.000000 V=1
+Update node 1322613754176 Before: W=2.500000 V=6
+ After: W=2.500000 V=7
+[EXPAND] Expanding move: f (7,2) rot=7
+[EXPAND] Created child: 1322613882496
+[EXPAND] child->untried_moves = 1080
+[TEST] Expanded child pointer=1322613882496 child_untried=1080
+[SIMULATE] start
+----- NODE INFO -----
+Node ptr: 1322613882496
+Parent : 1322613754176
+Children: 0
+Visits: 0
+Wins: 0.000000
+Move: f (7,2) rot=7
+Untried moves: 1080
+----------------------
+[SIMULATE] score1=64 score2=50 result=1.000000
+[BACKPROP] Result=1.000000
+Update node 1322613882496 Before: W=0.000000 V=0
+ After: W=1.000000 V=1
+Update node 1322613754176 Before: W=2.500000 V=7
+ After: W=3.500000 V=8
+[EXPAND] Expanding move: s (2,5) rot=2
+[EXPAND] Created child: 1322613882752
+[EXPAND] child->untried_moves = 1080
+[TEST] Expanded child pointer=1322613882752 child_untried=1080
+[SIMULATE] start
+----- NODE INFO -----
+Node ptr: 1322613882752
+Parent : 1322613754176
+Children: 0
+Visits: 0
+Wins: 0.000000
+Move: s (2,5) rot=2
+Untried moves: 1080
+----------------------
+[SIMULATE] score1=56 score2=40 result=1.000000
+[BACKPROP] Result=1.000000
+Update node 1322613882752 Before: W=0.000000 V=0
+ After: W=1.000000 V=1
+Update node 1322613754176 Before: W=3.500000 V=8
+ After: W=4.500000 V=9
+[EXPAND] Expanding move: f (4,8) rot=0
+[EXPAND] Created child: 1322613883008
+[EXPAND] child->untried_moves = 1076
+[TEST] Expanded child pointer=1322613883008 child_untried=1076
+[SIMULATE] start
+----- NODE INFO -----
+Node ptr: 1322613883008
+Parent : 1322613754176
+Children: 0
+Visits: 0
+Wins: 0.000000
+Move: f (4,8) rot=0
+Untried moves: 1076
+----------------------
+[SIMULATE] score1=45 score2=64 result=0.000000
+[BACKPROP] Result=0.000000
+Update node 1322613883008 Before: W=0.000000 V=0
+ After: W=0.000000 V=1
+Update node 1322613754176 Before: W=4.500000 V=9
+ After: W=4.500000 V=10
+=== Tree summary ===
+Root children = 10
+ Child #1 ptr=1322614087648 move=q visits=1 wins=1.000000 untried=1080
+ Child #2 ptr=1322613890912 move=p visits=1 wins=0.500000 untried=967
+ Child #3 ptr=1322613895280 move=r visits=1 wins=1.000000 untried=1080
+ Child #4 ptr=1322613873408 move=m visits=1 wins=0.000000 untried=1080
+ Child #5 ptr=1322613877920 move=c visits=1 wins=0.000000 untried=1080
+ Child #6 ptr=1322613901712 move=f visits=1 wins=0.000000 untried=1080
+ Child #7 ptr=1322613901968 move=r visits=1 wins=0.000000 untried=1080
+ Child #8 ptr=1322613882496 move=f visits=1 wins=1.000000 untried=1080
+ Child #9 ptr=1322613882752 move=s visits=1 wins=1.000000 untried=1080
+ Child #10 ptr=1322613883008 move=f visits=1 wins=0.000000 untried=1076
+=== node-management test finished ===
+=== Logging ended ===
+=== Logging started ===
+=== Starting node-management test ===
+Root untried_moves=1384
+[EXPAND] Expanding move: q (9,4) rot=3
+[EXPAND] child->untried_moves = 1050
+ child_untried=1050
+[SIMULATE] start
+----- NODE INFO -----
+Children: 0
+Visits: 0
+Wins: 0.000000
+Move: q (9,4) rot=3
+Untried moves: 1050
+----------------------
+[SIMULATE] score1=51 score2=47 result=1.000000
+[BACKPROP] Result=1.000000
+ Before: W=0.000000 V=0
+ After: W=1.000000 V=1
+ Before: W=0.000000 V=0
+ After: W=1.000000 V=1
+[EXPAND] Expanding move: e (3,7) rot=7
+[EXPAND] child->untried_moves = 1080
+ child_untried=1080
+[SIMULATE] start
+----- NODE INFO -----
+Children: 0
+Visits: 0
+Wins: 0.000000
+Move: e (3,7) rot=7
+Untried moves: 1080
+----------------------
+[SIMULATE] score1=45 score2=39 result=1.000000
+[BACKPROP] Result=1.000000
+ Before: W=0.000000 V=0
+ After: W=1.000000 V=1
+ Before: W=1.000000 V=1
+ After: W=2.000000 V=2
+[EXPAND] Expanding move: b (7,7) rot=4
+[EXPAND] child->untried_moves = 1048
+ child_untried=1048
+[SIMULATE] start
+----- NODE INFO -----
+Children: 0
+Visits: 0
+Wins: 0.000000
+Move: b (7,7) rot=4
+Untried moves: 1048
+----------------------
+[SIMULATE] score1=44 score2=55 result=0.000000
+[BACKPROP] Result=0.000000
+ Before: W=0.000000 V=0
+ After: W=0.000000 V=1
+ Before: W=2.000000 V=2
+ After: W=2.000000 V=3
+[EXPAND] Expanding move: l (8,6) rot=0
+[EXPAND] child->untried_moves = 1027
+ child_untried=1027
+[SIMULATE] start
+----- NODE INFO -----
+Children: 0
+Visits: 0
+Wins: 0.000000
+Move: l (8,6) rot=0
+Untried moves: 1027
+----------------------
+[SIMULATE] score1=51 score2=32 result=1.000000
+[BACKPROP] Result=1.000000
+ Before: W=0.000000 V=0
+ After: W=1.000000 V=1
+ Before: W=2.000000 V=3
+ After: W=3.000000 V=4
+[EXPAND] Expanding move: k (7,2) rot=1
+[EXPAND] child->untried_moves = 1080
+ child_untried=1080
+[SIMULATE] start
+----- NODE INFO -----
+Children: 0
+Visits: 0
+Wins: 0.000000
+Move: k (7,2) rot=1
+Untried moves: 1080
+----------------------
+[SIMULATE] score1=60 score2=51 result=1.000000
+[BACKPROP] Result=1.000000
+ Before: W=0.000000 V=0
+ After: W=1.000000 V=1
+ Before: W=3.000000 V=4
+ After: W=4.000000 V=5
+[EXPAND] Expanding move: t (7,3) rot=3
+[EXPAND] child->untried_moves = 1080
+ child_untried=1080
+[SIMULATE] start
+----- NODE INFO -----
+Children: 0
+Visits: 0
+Wins: 0.000000
+Move: t (7,3) rot=3
+Untried moves: 1080
+----------------------
+[SIMULATE] score1=65 score2=39 result=1.000000
+[BACKPROP] Result=1.000000
+ Before: W=0.000000 V=0
+ After: W=1.000000 V=1
+ Before: W=4.000000 V=5
+ After: W=5.000000 V=6
+[EXPAND] Expanding move: s (3,8) rot=6
+[EXPAND] child->untried_moves = 1080
+ child_untried=1080
+[SIMULATE] start
+----- NODE INFO -----
+Children: 0
+Visits: 0
+Wins: 0.000000
+Move: s (3,8) rot=6
+Untried moves: 1080
+----------------------
+[SIMULATE] score1=66 score2=51 result=1.000000
+[BACKPROP] Result=1.000000
+ Before: W=0.000000 V=0
+ After: W=1.000000 V=1
+ Before: W=5.000000 V=6
+ After: W=6.000000 V=7
+[EXPAND] Expanding move: s (5,8) rot=5
+[EXPAND] child->untried_moves = 1040
+ child_untried=1040
+[SIMULATE] start
+----- NODE INFO -----
+Children: 0
+Visits: 0
+Wins: 0.000000
+Move: s (5,8) rot=5
+Untried moves: 1040
+----------------------
+[SIMULATE] score1=51 score2=46 result=1.000000
+[BACKPROP] Result=1.000000
+ Before: W=0.000000 V=0
+ After: W=1.000000 V=1
+ Before: W=6.000000 V=7
+ After: W=7.000000 V=8
+[EXPAND] Expanding move: r (7,6) rot=1
+[EXPAND] child->untried_moves = 1023
+ child_untried=1023
+[SIMULATE] start
+----- NODE INFO -----
+Children: 0
+Visits: 0
+Wins: 0.000000
+Move: r (7,6) rot=1
+Untried moves: 1023
+----------------------
+[SIMULATE] score1=51 score2=64 result=0.000000
+[BACKPROP] Result=0.000000
+ Before: W=0.000000 V=0
+ After: W=0.000000 V=1
+ Before: W=7.000000 V=8
+ After: W=7.000000 V=9
+[EXPAND] Expanding move: p (2,4) rot=2
+[EXPAND] child->untried_moves = 1080
+ child_untried=1080
+[SIMULATE] start
+----- NODE INFO -----
+Children: 0
+Visits: 0
+Wins: 0.000000
+Move: p (2,4) rot=2
+Untried moves: 1080
+----------------------
+[SIMULATE] score1=59 score2=41 result=1.000000
+[BACKPROP] Result=1.000000
+ Before: W=0.000000 V=0
+ After: W=1.000000 V=1
+ Before: W=7.000000 V=9
+ After: W=8.000000 V=10
+=== Tree summary ===
+Root children = 10
+ Child #1 move=q visits=1 wins=1.000000 untried=1050
+ Child #2 move=e visits=1 wins=1.000000 untried=1080
+ Child #3 move=b visits=1 wins=0.000000 untried=1048
+ Child #4 move=l visits=1 wins=1.000000 untried=1027
+ Child #5 move=k visits=1 wins=1.000000 untried=1080
+ Child #6 move=t visits=1 wins=1.000000 untried=1080
+ Child #7 move=s visits=1 wins=1.000000 untried=1080
+ Child #8 move=s visits=1 wins=1.000000 untried=1040
+ Child #9 move=r visits=1 wins=0.000000 untried=1023
+ Child #10 move=p visits=1 wins=1.000000 untried=1080
+=== node-management test finished ===
+=== Logging ended ===
+=== Logging started ===
+=== Starting node-management test ===
+Root untried_moves=1384
+[EXPAND] Expanding move: i (7,7) rot=0
+[EXPAND] child->untried_moves = 887
+ child_untried=887
+[SIMULATE] start
+----- NODE INFO -----
+Children: 0
+Visits: 0
+Wins: 0.000000
+Move: i (7,7) rot=0
+Untried moves: 887
+----------------------
+[SIMULATE] score1=66 score2=47 result=1.000000
+[BACKPROP] Result=1.000000
+ Before: W=0.000000 V=0
+ After: W=1.000000 V=1
+ Before: W=0.000000 V=0
+ After: W=1.000000 V=1
+[EXPAND] Expanding move: h (4,3) rot=4
+[EXPAND] child->untried_moves = 1080
+ child_untried=1080
+[SIMULATE] start
+----- NODE INFO -----
+Children: 0
+Visits: 0
+Wins: 0.000000
+Move: h (4,3) rot=4
+Untried moves: 1080
+----------------------
+[SIMULATE] score1=51 score2=48 result=1.000000
+[BACKPROP] Result=1.000000
+ Before: W=0.000000 V=0
+ After: W=1.000000 V=1
+ Before: W=1.000000 V=1
+ After: W=2.000000 V=2
+[EXPAND] Expanding move: p (8,7) rot=1
+[EXPAND] child->untried_moves = 886
+ child_untried=886
+[SIMULATE] start
+----- NODE INFO -----
+Children: 0
+Visits: 0
+Wins: 0.000000
+Move: p (8,7) rot=1
+Untried moves: 886
+----------------------
+[SIMULATE] score1=53 score2=41 result=1.000000
+[BACKPROP] Result=1.000000
+ Before: W=0.000000 V=0
+ After: W=1.000000 V=1
+ Before: W=2.000000 V=2
+ After: W=3.000000 V=3
+[EXPAND] Expanding move: g (8,4) rot=4
+[EXPAND] child->untried_moves = 1076
+ child_untried=1076
+[SIMULATE] start
+----- NODE INFO -----
+Children: 0
+Visits: 0
+Wins: 0.000000
+Move: g (8,4) rot=4
+Untried moves: 1076
+----------------------
+[SIMULATE] score1=55 score2=36 result=1.000000
+[BACKPROP] Result=1.000000
+ Before: W=0.000000 V=0
+ After: W=1.000000 V=1
+ Before: W=3.000000 V=3
+ After: W=4.000000 V=4
+[EXPAND] Expanding move: i (8,7) rot=7
+[EXPAND] child->untried_moves = 903
+ child_untried=903
+[SIMULATE] start
+----- NODE INFO -----
+Children: 0
+Visits: 0
+Wins: 0.000000
+Move: i (8,7) rot=7
+Untried moves: 903
+----------------------
+[SIMULATE] score1=46 score2=51 result=0.000000
+[BACKPROP] Result=0.000000
+ Before: W=0.000000 V=0
+ After: W=0.000000 V=1
+ Before: W=4.000000 V=4
+ After: W=4.000000 V=5
+[EXPAND] Expanding move: m (2,3) rot=6
+[EXPAND] child->untried_moves = 1080
+ child_untried=1080
+[SIMULATE] start
+----- NODE INFO -----
+Children: 0
+Visits: 0
+Wins: 0.000000
+Move: m (2,3) rot=6
+Untried moves: 1080
+----------------------
+[SIMULATE] score1=49 score2=43 result=1.000000
+[BACKPROP] Result=1.000000
+ Before: W=0.000000 V=0
+ After: W=1.000000 V=1
+ Before: W=4.000000 V=5
+ After: W=5.000000 V=6
+[EXPAND] Expanding move: m (7,7) rot=7
+[EXPAND] child->untried_moves = 914
+ child_untried=914
+[SIMULATE] start
+----- NODE INFO -----
+Children: 0
+Visits: 0
+Wins: 0.000000
+Move: m (7,7) rot=7
+Untried moves: 914
+----------------------
+[SIMULATE] score1=58 score2=39 result=1.000000
+[BACKPROP] Result=1.000000
+ Before: W=0.000000 V=0
+ After: W=1.000000 V=1
+ Before: W=5.000000 V=6
+ After: W=6.000000 V=7
+[EXPAND] Expanding move: l (4,2) rot=7
+[EXPAND] child->untried_moves = 1080
+ child_untried=1080
+[SIMULATE] start
+----- NODE INFO -----
+Children: 0
+Visits: 0
+Wins: 0.000000
+Move: l (4,2) rot=7
+Untried moves: 1080
+----------------------
+[SIMULATE] score1=55 score2=37 result=1.000000
+[BACKPROP] Result=1.000000
+ Before: W=0.000000 V=0
+ After: W=1.000000 V=1
+ Before: W=6.000000 V=7
+ After: W=7.000000 V=8
+[EXPAND] Expanding move: a (7,6) rot=6
+[EXPAND] child->untried_moves = 1076
+ child_untried=1076
+[SIMULATE] start
+----- NODE INFO -----
+Children: 0
+Visits: 0
+Wins: 0.000000
+Move: a (7,6) rot=6
+Untried moves: 1076
+----------------------
+[SIMULATE] score1=54 score2=55 result=0.000000
+[BACKPROP] Result=0.000000
+ Before: W=0.000000 V=0
+ After: W=0.000000 V=1
+ Before: W=7.000000 V=8
+ After: W=7.000000 V=9
+[EXPAND] Expanding move: o (2,7) rot=3
+[EXPAND] child->untried_moves = 1080
+ child_untried=1080
+[SIMULATE] start
+----- NODE INFO -----
+Children: 0
+Visits: 0
+Wins: 0.000000
+Move: o (2,7) rot=3
+Untried moves: 1080
+----------------------
+[SIMULATE] score1=52 score2=41 result=1.000000
+[BACKPROP] Result=1.000000
+ Before: W=0.000000 V=0
+ After: W=1.000000 V=1
+ Before: W=7.000000 V=9
+ After: W=8.000000 V=10
+=== Tree summary ===
+Root children = 10
+ Child #1 move=i visits=1 wins=1.000000 untried=887
+ Child #2 move=h visits=1 wins=1.000000 untried=1080
+ Child #3 move=p visits=1 wins=1.000000 untried=886
+ Child #4 move=g visits=1 wins=1.000000 untried=1076
+ Child #5 move=i visits=1 wins=0.000000 untried=903
+ Child #6 move=m visits=1 wins=1.000000 untried=1080
+ Child #7 move=m visits=1 wins=1.000000 untried=914
+ Child #8 move=l visits=1 wins=1.000000 untried=1080
+ Child #9 move=a visits=1 wins=0.000000 untried=1076
+ Child #10 move=o visits=1 wins=1.000000 untried=1080
+=== node-management test finished ===
+=== Logging ended ===
+=== Logging started ===
+=== Starting node-management test ===
+Root untried_moves=1384
+[EXPAND] Expanding move: p (3,8) rot=6
+[EXPAND] child->untried_moves = 1076
+ child_untried=1076
+[SIMULATE] start
+----- NODE INFO -----
+Children: 0
+Visits: 0
+Wins: 0.000000
+Move: p (3,8) rot=6
+Untried moves: 1076
+----------------------
+[SIMULATE] score1=66 score2=51 result=1.000000
+[BACKPROP] Result=1.000000
+ Before: W=0.000000 V=0
+ After: W=1.000000 V=1
+ Before: W=0.000000 V=0
+ After: W=1.000000 V=1
+[EXPAND] Expanding move: a (6,7) rot=6
+[EXPAND] child->untried_moves = 1072
+ child_untried=1072
+[SIMULATE] start
+----- NODE INFO -----
+Children: 0
+Visits: 0
+Wins: 0.000000
+Move: a (6,7) rot=6
+Untried moves: 1072
+----------------------
+[SIMULATE] score1=45 score2=41 result=1.000000
+[BACKPROP] Result=1.000000
+ Before: W=0.000000 V=0
+ After: W=1.000000 V=1
+ Before: W=1.000000 V=1
+ After: W=2.000000 V=2
+[EXPAND] Expanding move: p (6,8) rot=0
+[EXPAND] child->untried_moves = 940
+ child_untried=940
+[SIMULATE] start
+----- NODE INFO -----
+Children: 0
+Visits: 0
+Wins: 0.000000
+Move: p (6,8) rot=0
+Untried moves: 940
+----------------------
+[SIMULATE] score1=50 score2=34 result=1.000000
+[BACKPROP] Result=1.000000
+ Before: W=0.000000 V=0
+ After: W=1.000000 V=1
+ Before: W=2.000000 V=2
+ After: W=3.000000 V=3
+[EXPAND] Expanding move: i (6,2) rot=0
+[EXPAND] child->untried_moves = 1080
+ child_untried=1080
+[SIMULATE] start
+----- NODE INFO -----
+Children: 0
+Visits: 0
+Wins: 0.000000
+Move: i (6,2) rot=0
+Untried moves: 1080
+----------------------
+[SIMULATE] score1=54 score2=54 result=0.500000
+[BACKPROP] Result=0.500000
+ Before: W=0.000000 V=0
+ After: W=0.500000 V=1
+ Before: W=3.000000 V=3
+ After: W=3.500000 V=4
+[EXPAND] Expanding move: q (2,3) rot=2
+[EXPAND] child->untried_moves = 1080
+ child_untried=1080
+[SIMULATE] start
+----- NODE INFO -----
+Children: 0
+Visits: 0
+Wins: 0.000000
+Move: q (2,3) rot=2
+Untried moves: 1080
+----------------------
+[SIMULATE] score1=46 score2=45 result=1.000000
+[BACKPROP] Result=1.000000
+ Before: W=0.000000 V=0
+ After: W=1.000000 V=1
+ Before: W=3.500000 V=4
+ After: W=4.500000 V=5
+[EXPAND] Expanding move: b (7,4) rot=6
+[EXPAND] child->untried_moves = 1080
+ child_untried=1080
+[SIMULATE] start
+----- NODE INFO -----
+Children: 0
+Visits: 0
+Wins: 0.000000
+Move: b (7,4) rot=6
+Untried moves: 1080
+----------------------
+[SIMULATE] score1=65 score2=50 result=1.000000
+[BACKPROP] Result=1.000000
+ Before: W=0.000000 V=0
+ After: W=1.000000 V=1
+ Before: W=4.500000 V=5
+ After: W=5.500000 V=6
+[EXPAND] Expanding move: p (7,2) rot=0
+[EXPAND] child->untried_moves = 1080
+ child_untried=1080
+[SIMULATE] start
+----- NODE INFO -----
+Children: 0
+Visits: 0
+Wins: 0.000000
+Move: p (7,2) rot=0
+Untried moves: 1080
+----------------------
+[SIMULATE] score1=56 score2=32 result=1.000000
+[BACKPROP] Result=1.000000
+ Before: W=0.000000 V=0
+ After: W=1.000000 V=1
+ Before: W=5.500000 V=6
+ After: W=6.500000 V=7
+[EXPAND] Expanding move: a (3,4) rot=2
+[EXPAND] child->untried_moves = 1080
+ child_untried=1080
+[SIMULATE] start
+----- NODE INFO -----
+Children: 0
+Visits: 0
+Wins: 0.000000
+Move: a (3,4) rot=2
+Untried moves: 1080
+----------------------
+[SIMULATE] score1=55 score2=42 result=1.000000
+[BACKPROP] Result=1.000000
+ Before: W=0.000000 V=0
+ After: W=1.000000 V=1
+ Before: W=6.500000 V=7
+ After: W=7.500000 V=8
+[EXPAND] Expanding move: h (6,7) rot=0
+[EXPAND] child->untried_moves = 964
+ child_untried=964
+[SIMULATE] start
+----- NODE INFO -----
+Children: 0
+Visits: 0
+Wins: 0.000000
+Move: h (6,7) rot=0
+Untried moves: 964
+----------------------
+[SIMULATE] score1=54 score2=42 result=1.000000
+[BACKPROP] Result=1.000000
+ Before: W=0.000000 V=0
+ After: W=1.000000 V=1
+ Before: W=7.500000 V=8
+ After: W=8.500000 V=9
+[EXPAND] Expanding move: t (4,2) rot=6
+[EXPAND] child->untried_moves = 1080
+ child_untried=1080
+[SIMULATE] start
+----- NODE INFO -----
+Children: 0
+Visits: 0
+Wins: 0.000000
+Move: t (4,2) rot=6
+Untried moves: 1080
+----------------------
+[SIMULATE] score1=45 score2=37 result=1.000000
+[BACKPROP] Result=1.000000
+ Before: W=0.000000 V=0
+ After: W=1.000000 V=1
+ Before: W=8.500000 V=9
+ After: W=9.500000 V=10
+=== Tree summary ===
+Root children = 10
+ Child #1 move=p visits=1 wins=1.000000 untried=1076
+ Child #2 move=a visits=1 wins=1.000000 untried=1072
+ Child #3 move=p visits=1 wins=1.000000 untried=940
+ Child #4 move=i visits=1 wins=0.500000 untried=1080
+ Child #5 move=q visits=1 wins=1.000000 untried=1080
+ Child #6 move=b visits=1 wins=1.000000 untried=1080
+ Child #7 move=p visits=1 wins=1.000000 untried=1080
+ Child #8 move=a visits=1 wins=1.000000 untried=1080
+ Child #9 move=h visits=1 wins=1.000000 untried=964
+ Child #10 move=t visits=1 wins=1.000000 untried=1080
+=== node-management test finished ===
+=== Logging ended ===
+=== Logging started ===
+=== Starting node-management test 2===
+Root untried_moves=1384
+[EXPAND] Expanding move: l (4,9) rot=0
+[EXPAND] child->untried_moves = 1076
+ child_untried=1076
+[SIMULATE] start
+----- NODE INFO -----
+Children: 0
+Visits: 0
+Wins: 0.000000
+Move: l (4,9) rot=0
+Untried moves: 1076
+----------------------
+[SIMULATE] score1=61 score2=38 result=1.000000
+[BACKPROP] Result=1.000000
+ Before: W=0.000000 V=0
+ After: W=1.000000 V=1
+ Before: W=0.000000 V=0
+ After: W=1.000000 V=1
+[EXPAND] Expanding move: o (3,7) rot=0
+[EXPAND] child->untried_moves = 1080
+ child_untried=1080
+[SIMULATE] start
+----- NODE INFO -----
+Children: 0
+Visits: 0
+Wins: 0.000000
+Move: o (3,7) rot=0
+Untried moves: 1080
+----------------------
+[SIMULATE] score1=52 score2=42 result=1.000000
+[BACKPROP] Result=1.000000
+ Before: W=0.000000 V=0
+ After: W=1.000000 V=1
+ Before: W=1.000000 V=1
+ After: W=2.000000 V=2
+[EXPAND] Expanding move: h (6,8) rot=6
+[EXPAND] child->untried_moves = 964
+ child_untried=964
+[SIMULATE] start
+----- NODE INFO -----
+Children: 0
+Visits: 0
+Wins: 0.000000
+Move: h (6,8) rot=6
+Untried moves: 964
+----------------------
+[SIMULATE] score1=41 score2=55 result=0.000000
+[BACKPROP] Result=0.000000
+ Before: W=0.000000 V=0
+ After: W=0.000000 V=1
+ Before: W=2.000000 V=2
+ After: W=2.000000 V=3
+[EXPAND] Expanding move: l (2,7) rot=7
+[EXPAND] child->untried_moves = 1080
+ child_untried=1080
+[SIMULATE] start
+----- NODE INFO -----
+Children: 0
+Visits: 0
+Wins: 0.000000
+Move: l (2,7) rot=7
+Untried moves: 1080
+----------------------
+[SIMULATE] score1=52 score2=40 result=1.000000
+[BACKPROP] Result=1.000000
+ Before: W=0.000000 V=0
+ After: W=1.000000 V=1
+ Before: W=2.000000 V=3
+ After: W=3.000000 V=4
+[EXPAND] Expanding move: n (3,8) rot=4
+[EXPAND] child->untried_moves = 1076
+ child_untried=1076
+[SIMULATE] start
+----- NODE INFO -----
+Children: 0
+Visits: 0
+Wins: 0.000000
+Move: n (3,8) rot=4
+Untried moves: 1076
+----------------------
+[SIMULATE] score1=70 score2=36 result=1.000000
+[BACKPROP] Result=1.000000
+ Before: W=0.000000 V=0
+ After: W=1.000000 V=1
+ Before: W=3.000000 V=4
+ After: W=4.000000 V=5
+[EXPAND] Expanding move: l (3,8) rot=5
+[EXPAND] child->untried_moves = 1076
+ child_untried=1076
+[SIMULATE] start
+----- NODE INFO -----
+Children: 0
+Visits: 0
+Wins: 0.000000
+Move: l (3,8) rot=5
+Untried moves: 1076
+----------------------
+[SIMULATE] score1=50 score2=41 result=1.000000
+[BACKPROP] Result=1.000000
+ Before: W=0.000000 V=0
+ After: W=1.000000 V=1
+ Before: W=4.000000 V=5
+ After: W=5.000000 V=6
+[EXPAND] Expanding move: t (2,5) rot=7
+[EXPAND] child->untried_moves = 1080
+ child_untried=1080
+[SIMULATE] start
+----- NODE INFO -----
+Children: 0
+Visits: 0
+Wins: 0.000000
+Move: t (2,5) rot=7
+Untried moves: 1080
+----------------------
+[SIMULATE] score1=50 score2=45 result=1.000000
+[BACKPROP] Result=1.000000
+ Before: W=0.000000 V=0
+ After: W=1.000000 V=1
+ Before: W=5.000000 V=6
+ After: W=6.000000 V=7
+[EXPAND] Expanding move: b (4,7) rot=5
+[EXPAND] child->untried_moves = 1080
+ child_untried=1080
+[SIMULATE] start
+----- NODE INFO -----
+Children: 0
+Visits: 0
+Wins: 0.000000
+Move: b (4,7) rot=5
+Untried moves: 1080
+----------------------
+[SIMULATE] score1=52 score2=49 result=1.000000
+[BACKPROP] Result=1.000000
+ Before: W=0.000000 V=0
+ After: W=1.000000 V=1
+ Before: W=6.000000 V=7
+ After: W=7.000000 V=8
+[EXPAND] Expanding move: a (3,6) rot=1
+[EXPAND] child->untried_moves = 1080
+ child_untried=1080
+[SIMULATE] start
+----- NODE INFO -----
+Children: 0
+Visits: 0
+Wins: 0.000000
+Move: a (3,6) rot=1
+Untried moves: 1080
+----------------------
+[SIMULATE] score1=36 score2=55 result=0.000000
+[BACKPROP] Result=0.000000
+ Before: W=0.000000 V=0
+ After: W=0.000000 V=1
+ Before: W=7.000000 V=8
+ After: W=7.000000 V=9
+[EXPAND] Expanding move: t (3,7) rot=7
+[EXPAND] child->untried_moves = 1080
+ child_untried=1080
+[SIMULATE] start
+----- NODE INFO -----
+Children: 0
+Visits: 0
+Wins: 0.000000
+Move: t (3,7) rot=7
+Untried moves: 1080
+----------------------
+[SIMULATE] score1=47 score2=43 result=1.000000
+[BACKPROP] Result=1.000000
+ Before: W=0.000000 V=0
+ After: W=1.000000 V=1
+ Before: W=7.000000 V=9
+ After: W=8.000000 V=10
+=== Tree summary ===
+Root children = 10
+ Child #1 move=l visits=1 wins=1.000000 untried=1076
+ Child #2 move=o visits=1 wins=1.000000 untried=1080
+ Child #3 move=h visits=1 wins=0.000000 untried=964
+ Child #4 move=l visits=1 wins=1.000000 untried=1080
+ Child #5 move=n visits=1 wins=1.000000 untried=1076
+ Child #6 move=l visits=1 wins=1.000000 untried=1076
+ Child #7 move=t visits=1 wins=1.000000 untried=1080
+ Child #8 move=b visits=1 wins=1.000000 untried=1080
+ Child #9 move=a visits=1 wins=0.000000 untried=1080
+ Child #10 move=t visits=1 wins=1.000000 untried=1080
+=== node-management test finished ===
+=== Logging ended ===

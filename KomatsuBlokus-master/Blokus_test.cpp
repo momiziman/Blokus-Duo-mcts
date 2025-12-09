@@ -757,44 +757,36 @@ vector<string> get_legal_block_types(Board &board, Color player_color,
 
 // ランダムプレイアウト関数
 pair<int, int> random_playout(Board board, Player player1,
-                              Player player2) // MCTS時は&を消すこと！
+                              Player player2) // MCTS時は値渡し（コピー）でOK
 {
   // プレイヤー順番
   Color current_color = Color::PLAYER1;
 
-  std::random_device rd;
-  std::mt19937 gen(rd());
+  static thread_local std::mt19937 gen((std::random_device())());
 
   while (true) {
     Player *current_player =
         (current_color == Color::PLAYER1) ? &player1 : &player2;
 
-    // 現在プレイヤーの合法手を取得
+    // 現在プレイヤーの合法手を取得（コピーされた board/player を使う）
     auto legal_moves =
         get_all_legal_moves(board, current_color, *current_player);
 
     if (!legal_moves.empty()) {
       // ランダムに1手選択
-      std::uniform_int_distribution<> dis(0, legal_moves.size() - 1);
+      std::uniform_int_distribution<> dis(0, (int)legal_moves.size() - 1);
       int idx = dis(gen);
 
       auto [block_id, x, y, rot] = legal_moves[idx];
       BlockData data = getBlock(block_id);
       Block block(data);
 
-      // 盤面を更新（スコアも更新される前提）
+      // 盤面を更新（スコアも更新される）
       board.change_status(current_color, block, block_id, rot, x, y,
                           *current_player);
 
-      // 盤面更新後の used_blocks 出力
-      std::cout << "[DEBUG] Player"
-                << ((current_color == Color::PLAYER1) ? "1" : "2")
-                << " used_blocks after placing block " << block_id << ":\n";
-
-      for (const auto &b : current_player->used_blocks) {
-        std::cout << "  Block " << b << "\n"; // 文字列なのでそのまま出力
-      }
-      std::cout << std::endl;
+      // NOTE: デバッグ出力は大量になるので標準では出さない
+      // （必要なら MCTSLogger を使ってログに残す）
     }
 
     // 次のプレイヤーに交代
@@ -808,7 +800,7 @@ pair<int, int> random_playout(Board board, Player player1,
       break;
   }
 
-  // 最終スコアを返す
+  // 最終スコアを返す（コピーされた player1/player2 の score を返す）
   return {player1.score, player2.score};
 }
 
@@ -877,15 +869,12 @@ struct MCTSNode {
     double best_value = -1e18;
     MCTSNode *best = nullptr;
 
-    MCTSLogger::writeln("[SELECT] Node = " + std::to_string((uint64_t)this));
-
     for (auto child : children) {
       double ucb = (child->win_score / (child->visit_count + 1e-6)) +
                    C * std::sqrt(std::log(visit_count + 1) /
                                  (child->visit_count + 1e-6));
 
-      MCTSLogger::writeln("Child " + std::to_string((uint64_t)child) +
-                          " UCB=" + std::to_string(ucb) +
+      MCTSLogger::writeln(" UCB=" + std::to_string(ucb) +
                           " W=" + std::to_string(child->win_score) +
                           " V=" + std::to_string(child->visit_count));
 
@@ -894,7 +883,6 @@ struct MCTSNode {
         best = child;
       }
     }
-    MCTSLogger::writeln("Selected = " + std::to_string((uint64_t)best));
     return best;
   }
 
@@ -907,7 +895,7 @@ struct MCTSNode {
 
     static std::random_device rd;
     static std::mt19937 gen(rd());
-    std::uniform_int_distribution<> dis(0, untried_moves.size() - 1);
+    std::uniform_int_distribution<> dis(0, (int)untried_moves.size() - 1);
 
     int idx = dis(gen);
     auto [block_id, x, y, rot] = untried_moves[idx];
@@ -916,34 +904,46 @@ struct MCTSNode {
                         std::to_string(x) + "," + std::to_string(y) +
                         ") rot=" + std::to_string(rot));
 
+    // 選んだ手を未展開リストから削除
     untried_moves.erase(untried_moves.begin() + idx);
 
+    // 次ノード用の盤面/プレイヤー状態をコピー
     Board next_board = board;
     Player next_p1 = player1;
     Player next_p2 = player2;
 
     Player *cur = (current_player == Color::PLAYER1) ? &next_p1 : &next_p2;
 
+    // 盤面更新（next_board に対して）
     BlockData data = getBlock(block_id);
     Block blk(data);
-
     next_board.change_status(current_player, blk, block_id, rot, x, y, *cur);
 
+    // 次ターンを決定
     Color next_turn =
         (current_player == Color::PLAYER1) ? Color::PLAYER2 : Color::PLAYER1;
 
+    // 子ノードを生成（parent=this）
     MCTSNode *child =
         new MCTSNode(next_board, next_p1, next_p2, next_turn, this);
 
+    // 子ノードの着手情報を設定
     child->move_block_id = block_id;
     child->move_x = x;
     child->move_y = y;
     child->move_rot = rot;
 
+    // 子を追加
     children.push_back(child);
 
-    MCTSLogger::writeln("[EXPAND] Created child: " +
-                        std::to_string((uint64_t)child));
+    // ⭐ ここが重要：子ノードの未展開手（合法手）を計算して設定する
+    Player *next_player =
+        (next_turn == Color::PLAYER1) ? &child->player1 : &child->player2;
+    child->untried_moves =
+        get_all_legal_moves(child->board, next_turn, *next_player);
+
+    MCTSLogger::writeln("[EXPAND] child->untried_moves = " +
+                        std::to_string(child->untried_moves.size()));
 
     return child;
   }
@@ -974,8 +974,7 @@ struct MCTSNode {
 
     MCTSNode *node = this;
     while (node != nullptr) {
-      MCTSLogger::writeln("Update node " + std::to_string((uint64_t)node) +
-                          " Before: W=" + std::to_string(node->win_score) +
+      MCTSLogger::writeln(" Before: W=" + std::to_string(node->win_score) +
                           " V=" + std::to_string(node->visit_count));
 
       node->visit_count++;
@@ -989,10 +988,17 @@ struct MCTSNode {
   }
 };
 
+void delete_subtree(MCTSNode *node) {
+  if (!node)
+    return;
+  for (auto child : node->children) {
+    delete_subtree(child);
+  }
+  delete node;
+}
+
 void log_node_basic(const MCTSNode *node) {
   MCTSLogger::writeln("----- NODE INFO -----");
-  MCTSLogger::writeln("Node ptr: " + std::to_string((uint64_t)node));
-  MCTSLogger::writeln("Parent : " + std::to_string((uint64_t)node->parent));
   MCTSLogger::writeln("Children: " + std::to_string(node->children.size()));
   MCTSLogger::writeln("Visits: " + std::to_string(node->visit_count));
   MCTSLogger::writeln("Wins: " + std::to_string(node->win_score));
@@ -1116,34 +1122,56 @@ int main() {
        {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
        {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}}};
 
-  // --- Logger 初期化 ---
+  // Logger 初期化（任意パス）
   MCTSLogger::init("mcts_log.txt");
+  MCTSLogger::writeln("=== Starting node-management test 2===");
 
-  // --- Board生成 ---
+  // Board / Player 初期化
   Board board(TILE_NUMBER, input_board);
-
-  // --- プレイヤー初期化（使用済みブロック入り） ---
   Player player1{Color::PLAYER1, {"u"}};
   Player player2{Color::PLAYER2, {"s"}};
 
-  MCTSNode root(board, player1, player2, Color::PLAYER1);
-  root.untried_moves = get_all_legal_moves(board, Color::PLAYER1, player1);
+  // ルートをヒープ確保して使う（delete_subtree を使いやすくするため）
+  MCTSNode *root =
+      new MCTSNode(board, player1, player2, Color::PLAYER1, nullptr);
+  root->untried_moves =
+      get_all_legal_moves(root->board, Color::PLAYER1, root->player1);
+  MCTSLogger::writeln("Root untried_moves=" +
+                      std::to_string(root->untried_moves.size()));
 
-  MCTSLogger::writeln("=== Starting MCTS debug ===");
-
-  // デバッグ用に少しだけ展開してみる
-  for (int i = 0; i < 3; ++i) {
-    MCTSNode *node = root.expand_node();
-    MCTSLogger::writeln("Expanded node #" + std::to_string(i + 1));
-    double result = node->simulate();
-    MCTSLogger::writeln("Simulation result: " + std::to_string(result));
-    node->backpropagate(result);
-    MCTSLogger::writeln("Backpropagation done for node #" +
-                        std::to_string(i + 1));
+  // 少し展開してシミュレーション
+  const int N = 10; // 必要な回数だけ展開して試す
+  for (int i = 0; i < N; ++i) {
+    if (root->untried_moves.empty()) {
+      MCTSLogger::writeln("[TEST] Root has no more untried moves.");
+      break;
+    }
+    MCTSNode *child = root->expand_node();
+    MCTSLogger::writeln(" child_untried=" +
+                        std::to_string(child->untried_moves.size()));
+    double res = child->simulate();
+    child->backpropagate(res);
   }
 
-  MCTSLogger::writeln("=== MCTS debug finished ===");
+  // ツリーをファイルに簡易ダンプ（親子関係）
+  MCTSLogger::writeln("=== Tree summary ===");
+  MCTSLogger::writeln("Root children = " +
+                      std::to_string(root->children.size()));
+  for (size_t i = 0; i < root->children.size(); ++i) {
+    MCTSNode *c = root->children[i];
+    MCTSLogger::writeln(" Child #" + std::to_string(i + 1) +
+                        " move=" + c->move_block_id +
+                        " visits=" + std::to_string(c->visit_count) +
+                        " wins=" + std::to_string(c->win_score) +
+                        " untried=" + std::to_string(c->untried_moves.size()));
+  }
+
+  // ツリー解放
+  delete_subtree(root);
+
+  MCTSLogger::writeln("=== node-management test finished ===");
   MCTSLogger::close();
 
-  cout << "MCTS debug log written to mcts_log.txt" << endl;
+  cout << "node-management test finished, see mcts_log.txt" << endl;
+  return 0;
 }
