@@ -185,3 +185,431 @@ Root children = 10
  Child #10 move=n visits=1 wins=0.000000 untried=1080
 === node-management test finished ===
 === Logging ended ===
+=== Logging started ===
+=== Starting MCTS selection-expansion test ===
+Root untried_moves = 1384
+
+=== Iteration 1 ===
+[EXPAND] Expanding move: t (4,2) rot=5
+[EXPAND] child->untried_moves = 1080
+[EXPAND] expanded move=t
+[SIMULATE] start
+----- NODE INFO -----
+Children: 0
+Visits: 0
+Wins: 0.000000
+Move: t (4,2) rot=5
+Untried moves: 1080
+----------------------
+[SIMULATE] score1=45 score2=59 result=0.000000
+[SIMULATE] result=0.000000
+[BACKPROP] Result=0.000000
+ Before: W=0.000000 V=0
+ After: W=0.000000 V=1
+ Before: W=0.000000 V=0
+ After: W=0.000000 V=1
+
+=== Iteration 2 ===
+[EXPAND] Expanding move: i (3,7) rot=4
+[EXPAND] child->untried_moves = 1080
+[EXPAND] expanded move=i
+[SIMULATE] start
+----- NODE INFO -----
+Children: 0
+Visits: 0
+Wins: 0.000000
+Move: i (3,7) rot=4
+Untried moves: 1080
+----------------------
+[SIMULATE] score1=45 score2=50 result=0.000000
+[SIMULATE] result=0.000000
+[BACKPROP] Result=0.000000
+ Before: W=0.000000 V=0
+ After: W=0.000000 V=1
+ Before: W=0.000000 V=1
+ After: W=0.000000 V=2
+
+=== Iteration 3 ===
+[EXPAND] Expanding move: a (6,3) rot=4
+[EXPAND] child->untried_moves = 1080
+[EXPAND] expanded move=a
+[SIMULATE] start
+----- NODE INFO -----
+Children: 0
+Visits: 0
+Wins: 0.000000
+Move: a (6,3) rot=4
+Untried moves: 1080
+----------------------
+[SIMULATE] score1=60 score2=34 result=1.000000
+[SIMULATE] result=1.000000
+[BACKPROP] Result=1.000000
+ Before: W=0.000000 V=0
+ After: W=1.000000 V=1
+ Before: W=0.000000 V=2
+ After: W=1.000000 V=3
+
+=== Iteration 4 ===
+[EXPAND] Expanding move: h (7,7) rot=5
+[EXPAND] child->untried_moves = 964
+[EXPAND] expanded move=h
+[SIMULATE] start
+----- NODE INFO -----
+Children: 0
+Visits: 0
+Wins: 0.000000
+Move: h (7,7) rot=5
+Untried moves: 964
+----------------------
+[SIMULATE] score1=52 score2=47 result=1.000000
+[SIMULATE] result=1.000000
+[BACKPROP] Result=1.000000
+ Before: W=0.000000 V=0
+ After: W=1.000000 V=1
+ Before: W=1.000000 V=3
+ After: W=2.000000 V=4
+
+=== Iteration 5 ===
+[EXPAND] Expanding move: d (7,4) rot=0
+[EXPAND] child->untried_moves = 1080
+[EXPAND] expanded move=d
+[SIMULATE] start
+----- NODE INFO -----
+Children: 0
+Visits: 0
+Wins: 0.000000
+Move: d (7,4) rot=0
+Untried moves: 1080
+----------------------
+[SIMULATE] score1=45 score2=41 result=1.000000
+[SIMULATE] result=1.000000
+[BACKPROP] Result=1.000000
+ Before: W=0.000000 V=0
+ After: W=1.000000 V=1
+ Before: W=2.000000 V=4
+ After: W=3.000000 V=5
+
+=== Iteration 6 ===
+[EXPAND] Expanding move: k (7,3) rot=2
+[EXPAND] child->untried_moves = 1080
+[EXPAND] expanded move=k
+[SIMULATE] start
+----- NODE INFO -----
+Children: 0
+Visits: 0
+Wins: 0.000000
+Move: k (7,3) rot=2
+Untried moves: 1080
+----------------------
+[SIMULATE] score1=45 score2=51 result=0.000000
+[SIMULATE] result=0.000000
+[BACKPROP] Result=0.000000
+ Before: W=0.000000 V=0
+ After: W=0.000000 V=1
+ Before: W=3.000000 V=5
+ After: W=3.000000 V=6
+
+=== Iteration 7 ===
+[EXPAND] Expanding move: t (4,2) rot=2
+[EXPAND] child->untried_moves = 1080
+[EXPAND] expanded move=t
+[SIMULATE] start
+----- NODE INFO -----
+Children: 0
+Visits: 0
+Wins: 0.000000
+Move: t (4,2) rot=2
+Untried moves: 1080
+----------------------
+[SIMULATE] score1=64 score2=42 result=1.000000
+[SIMULATE] result=1.000000
+[BACKPROP] Result=1.000000
+ Before: W=0.000000 V=0
+ After: W=1.000000 V=1
+ Before: W=3.000000 V=6
+ After: W=4.000000 V=7
+
+=== Iteration 8 ===
+[EXPAND] Expanding move: c (2,6) rot=3
+[EXPAND] child->untried_moves = 1080
+[EXPAND] expanded move=c
+[SIMULATE] start
+----- NODE INFO -----
+Children: 0
+Visits: 0
+Wins: 0.000000
+Move: c (2,6) rot=3
+Untried moves: 1080
+----------------------
+[SIMULATE] score1=60 score2=55 result=1.000000
+[SIMULATE] result=1.000000
+[BACKPROP] Result=1.000000
+ Before: W=0.000000 V=0
+ After: W=1.000000 V=1
+ Before: W=4.000000 V=7
+ After: W=5.000000 V=8
+
+=== Iteration 9 ===
+[EXPAND] Expanding move: q (1,6) rot=1
+[EXPAND] child->untried_moves = 1080
+[EXPAND] expanded move=q
+[SIMULATE] start
+----- NODE INFO -----
+Children: 0
+Visits: 0
+Wins: 0.000000
+Move: q (1,6) rot=1
+Untried moves: 1080
+----------------------
+[SIMULATE] score1=46 score2=46 result=0.500000
+[SIMULATE] result=0.500000
+[BACKPROP] Result=0.500000
+ Before: W=0.000000 V=0
+ After: W=0.500000 V=1
+ Before: W=5.000000 V=8
+ After: W=5.500000 V=9
+
+=== Iteration 10 ===
+[EXPAND] Expanding move: j (7,8) rot=0
+[EXPAND] child->untried_moves = 893
+[EXPAND] expanded move=j
+[SIMULATE] start
+----- NODE INFO -----
+Children: 0
+Visits: 0
+Wins: 0.000000
+Move: j (7,8) rot=0
+Untried moves: 893
+----------------------
+[SIMULATE] score1=39 score2=60 result=0.000000
+[SIMULATE] result=0.000000
+[BACKPROP] Result=0.000000
+ Before: W=0.000000 V=0
+ After: W=0.000000 V=1
+ Before: W=5.500000 V=9
+ After: W=5.500000 V=10
+
+=== Iteration 11 ===
+[EXPAND] Expanding move: e (3,8) rot=4
+[EXPAND] child->untried_moves = 1080
+[EXPAND] expanded move=e
+[SIMULATE] start
+----- NODE INFO -----
+Children: 0
+Visits: 0
+Wins: 0.000000
+Move: e (3,8) rot=4
+Untried moves: 1080
+----------------------
+[SIMULATE] score1=50 score2=56 result=0.000000
+[SIMULATE] result=0.000000
+[BACKPROP] Result=0.000000
+ Before: W=0.000000 V=0
+ After: W=0.000000 V=1
+ Before: W=5.500000 V=10
+ After: W=5.500000 V=11
+
+=== Iteration 12 ===
+[EXPAND] Expanding move: d (4,2) rot=3
+[EXPAND] child->untried_moves = 1080
+[EXPAND] expanded move=d
+[SIMULATE] start
+----- NODE INFO -----
+Children: 0
+Visits: 0
+Wins: 0.000000
+Move: d (4,2) rot=3
+Untried moves: 1080
+----------------------
+[SIMULATE] score1=65 score2=46 result=1.000000
+[SIMULATE] result=1.000000
+[BACKPROP] Result=1.000000
+ Before: W=0.000000 V=0
+ After: W=1.000000 V=1
+ Before: W=5.500000 V=11
+ After: W=6.500000 V=12
+
+=== Iteration 13 ===
+[EXPAND] Expanding move: b (7,6) rot=5
+[EXPAND] child->untried_moves = 1048
+[EXPAND] expanded move=b
+[SIMULATE] start
+----- NODE INFO -----
+Children: 0
+Visits: 0
+Wins: 0.000000
+Move: b (7,6) rot=5
+Untried moves: 1048
+----------------------
+[SIMULATE] score1=46 score2=42 result=1.000000
+[SIMULATE] result=1.000000
+[BACKPROP] Result=1.000000
+ Before: W=0.000000 V=0
+ After: W=1.000000 V=1
+ Before: W=6.500000 V=12
+ After: W=7.500000 V=13
+
+=== Iteration 14 ===
+[EXPAND] Expanding move: h (3,3) rot=5
+[EXPAND] child->untried_moves = 1080
+[EXPAND] expanded move=h
+[SIMULATE] start
+----- NODE INFO -----
+Children: 0
+Visits: 0
+Wins: 0.000000
+Move: h (3,3) rot=5
+Untried moves: 1080
+----------------------
+[SIMULATE] score1=45 score2=37 result=1.000000
+[SIMULATE] result=1.000000
+[BACKPROP] Result=1.000000
+ Before: W=0.000000 V=0
+ After: W=1.000000 V=1
+ Before: W=7.500000 V=13
+ After: W=8.500000 V=14
+
+=== Iteration 15 ===
+[EXPAND] Expanding move: p (8,5) rot=5
+[EXPAND] child->untried_moves = 1030
+[EXPAND] expanded move=p
+[SIMULATE] start
+----- NODE INFO -----
+Children: 0
+Visits: 0
+Wins: 0.000000
+Move: p (8,5) rot=5
+Untried moves: 1030
+----------------------
+[SIMULATE] score1=64 score2=55 result=1.000000
+[SIMULATE] result=1.000000
+[BACKPROP] Result=1.000000
+ Before: W=0.000000 V=0
+ After: W=1.000000 V=1
+ Before: W=8.500000 V=14
+ After: W=9.500000 V=15
+
+=== Iteration 16 ===
+[EXPAND] Expanding move: c (2,4) rot=7
+[EXPAND] child->untried_moves = 1080
+[EXPAND] expanded move=c
+[SIMULATE] start
+----- NODE INFO -----
+Children: 0
+Visits: 0
+Wins: 0.000000
+Move: c (2,4) rot=7
+Untried moves: 1080
+----------------------
+[SIMULATE] score1=56 score2=45 result=1.000000
+[SIMULATE] result=1.000000
+[BACKPROP] Result=1.000000
+ Before: W=0.000000 V=0
+ After: W=1.000000 V=1
+ Before: W=9.500000 V=15
+ After: W=10.500000 V=16
+
+=== Iteration 17 ===
+[EXPAND] Expanding move: p (8,4) rot=6
+[EXPAND] child->untried_moves = 1076
+[EXPAND] expanded move=p
+[SIMULATE] start
+----- NODE INFO -----
+Children: 0
+Visits: 0
+Wins: 0.000000
+Move: p (8,4) rot=6
+Untried moves: 1076
+----------------------
+[SIMULATE] score1=46 score2=51 result=0.000000
+[SIMULATE] result=0.000000
+[BACKPROP] Result=0.000000
+ Before: W=0.000000 V=0
+ After: W=0.000000 V=1
+ Before: W=10.500000 V=16
+ After: W=10.500000 V=17
+
+=== Iteration 18 ===
+[EXPAND] Expanding move: q (8,3) rot=5
+[EXPAND] child->untried_moves = 1080
+[EXPAND] expanded move=q
+[SIMULATE] start
+----- NODE INFO -----
+Children: 0
+Visits: 0
+Wins: 0.000000
+Move: q (8,3) rot=5
+Untried moves: 1080
+----------------------
+[SIMULATE] score1=50 score2=41 result=1.000000
+[SIMULATE] result=1.000000
+[BACKPROP] Result=1.000000
+ Before: W=0.000000 V=0
+ After: W=1.000000 V=1
+ Before: W=10.500000 V=17
+ After: W=11.500000 V=18
+
+=== Iteration 19 ===
+[EXPAND] Expanding move: b (3,7) rot=4
+[EXPAND] child->untried_moves = 1080
+[EXPAND] expanded move=b
+[SIMULATE] start
+----- NODE INFO -----
+Children: 0
+Visits: 0
+Wins: 0.000000
+Move: b (3,7) rot=4
+Untried moves: 1080
+----------------------
+[SIMULATE] score1=47 score2=51 result=0.000000
+[SIMULATE] result=0.000000
+[BACKPROP] Result=0.000000
+ Before: W=0.000000 V=0
+ After: W=0.000000 V=1
+ Before: W=11.500000 V=18
+ After: W=11.500000 V=19
+
+=== Iteration 20 ===
+[EXPAND] Expanding move: d (6,3) rot=0
+[EXPAND] child->untried_moves = 1080
+[EXPAND] expanded move=d
+[SIMULATE] start
+----- NODE INFO -----
+Children: 0
+Visits: 0
+Wins: 0.000000
+Move: d (6,3) rot=0
+Untried moves: 1080
+----------------------
+[SIMULATE] score1=47 score2=41 result=1.000000
+[SIMULATE] result=1.000000
+[BACKPROP] Result=1.000000
+ Before: W=0.000000 V=0
+ After: W=1.000000 V=1
+ Before: W=11.500000 V=19
+ After: W=12.500000 V=20
+
+=== Tree summary ===
+Root visits=20
+ Child #1 move=t V=1 W=0.000000
+ Child #2 move=i V=1 W=0.000000
+ Child #3 move=a V=1 W=1.000000
+ Child #4 move=h V=1 W=1.000000
+ Child #5 move=d V=1 W=1.000000
+ Child #6 move=k V=1 W=0.000000
+ Child #7 move=t V=1 W=1.000000
+ Child #8 move=c V=1 W=1.000000
+ Child #9 move=q V=1 W=0.500000
+ Child #10 move=j V=1 W=0.000000
+ Child #11 move=e V=1 W=0.000000
+ Child #12 move=d V=1 W=1.000000
+ Child #13 move=b V=1 W=1.000000
+ Child #14 move=h V=1 W=1.000000
+ Child #15 move=p V=1 W=1.000000
+ Child #16 move=c V=1 W=1.000000
+ Child #17 move=p V=1 W=0.000000
+ Child #18 move=q V=1 W=1.000000
+ Child #19 move=b V=1 W=0.000000
+ Child #20 move=d V=1 W=1.000000
+=== Test finished ===
+=== Logging ended ===

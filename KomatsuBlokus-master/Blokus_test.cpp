@@ -1087,6 +1087,7 @@ int main() {
 
   // --- 盤面初期化 ---
   vector<vector<vector<int>>> input_board = {
+      // ...（あなたの貼った盤面をそのまま使用）
       // PLAYER1
       {{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
        {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
@@ -1122,56 +1123,70 @@ int main() {
        {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
        {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}}};
 
-  // Logger 初期化（任意パス）
+  // Logger 初期化
   MCTSLogger::init("mcts_log.txt");
-  MCTSLogger::writeln("=== Starting node-management test 2===");
+  MCTSLogger::writeln("=== Starting MCTS selection-expansion test ===");
 
   // Board / Player 初期化
   Board board(TILE_NUMBER, input_board);
   Player player1{Color::PLAYER1, {"u"}};
   Player player2{Color::PLAYER2, {"s"}};
 
-  // ルートをヒープ確保して使う（delete_subtree を使いやすくするため）
+  // ルート作成
   MCTSNode *root =
       new MCTSNode(board, player1, player2, Color::PLAYER1, nullptr);
   root->untried_moves =
       get_all_legal_moves(root->board, Color::PLAYER1, root->player1);
-  MCTSLogger::writeln("Root untried_moves=" +
+
+  MCTSLogger::writeln("Root untried_moves = " +
                       std::to_string(root->untried_moves.size()));
 
-  // 少し展開してシミュレーション
-  const int N = 10; // 必要な回数だけ展開して試す
-  for (int i = 0; i < N; ++i) {
-    if (root->untried_moves.empty()) {
-      MCTSLogger::writeln("[TEST] Root has no more untried moves.");
-      break;
+  // --- MCTS 反復 ---
+  const int ITER = 20;
+  for (int i = 0; i < ITER; ++i) {
+    MCTSLogger::writeln("\n=== Iteration " + std::to_string(i + 1) + " ===");
+
+    // ----- 1. Selection -----
+    MCTSNode *node = root;
+    while (node->untried_moves.empty() && !node->children.empty()) {
+      node = node->select_child(); // ★UCB1で選択
+      MCTSLogger::writeln("[SELECT] moved to node: " + node->move_block_id);
     }
-    MCTSNode *child = root->expand_node();
-    MCTSLogger::writeln(" child_untried=" +
-                        std::to_string(child->untried_moves.size()));
-    double res = child->simulate();
-    child->backpropagate(res);
+
+    // ----- 2. Expansion -----
+    MCTSNode *expanded = nullptr;
+    if (!node->untried_moves.empty()) {
+      expanded = node->expand_node();
+      MCTSLogger::writeln("[EXPAND] expanded move=" + expanded->move_block_id);
+      node = expanded;
+    }
+
+    // ----- 3. Simulation -----
+    double result = node->simulate();
+    MCTSLogger::writeln("[SIMULATE] result=" + std::to_string(result));
+
+    // ----- 4. Backpropagation -----
+    node->backpropagate(result);
   }
 
-  // ツリーをファイルに簡易ダンプ（親子関係）
-  MCTSLogger::writeln("=== Tree summary ===");
-  MCTSLogger::writeln("Root children = " +
-                      std::to_string(root->children.size()));
+  // --- 結果表示 ---
+  MCTSLogger::writeln("\n=== Tree summary ===");
+  MCTSLogger::writeln("Root visits=" + std::to_string(root->visit_count));
+
   for (size_t i = 0; i < root->children.size(); ++i) {
     MCTSNode *c = root->children[i];
     MCTSLogger::writeln(" Child #" + std::to_string(i + 1) +
                         " move=" + c->move_block_id +
-                        " visits=" + std::to_string(c->visit_count) +
-                        " wins=" + std::to_string(c->win_score) +
-                        " untried=" + std::to_string(c->untried_moves.size()));
+                        " V=" + std::to_string(c->visit_count) +
+                        " W=" + std::to_string(c->win_score));
   }
 
-  // ツリー解放
+  // メモリ解放
   delete_subtree(root);
 
-  MCTSLogger::writeln("=== node-management test finished ===");
+  MCTSLogger::writeln("=== Test finished ===");
   MCTSLogger::close();
 
-  cout << "node-management test finished, see mcts_log.txt" << endl;
+  cout << "Test finished. See mcts_log.txt" << endl;
   return 0;
 }
