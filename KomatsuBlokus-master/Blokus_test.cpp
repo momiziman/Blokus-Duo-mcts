@@ -950,8 +950,8 @@ struct MCTSNode {
 
   // --- Simulation: playout の呼び出し ---
   double simulate() {
-    /*  MCTSLogger::writeln("[SIMULATE] start");  */
-    log_node_basic(this);
+    /*  MCTSLogger::writeln("[SIMULATE] start");
+    log_node_basic(this); */
 
     Board sim_board = board;
     Player sim_p1 = player1;
@@ -1123,73 +1123,24 @@ int main() {
        {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
        {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}}};
 
-  // Logger 初期化
-  MCTSLogger::init("mcts_log.txt");
-  MCTSLogger::writeln("=== Starting MCTS selection-expansion test ===");
-
   // Board / Player 初期化
   Board board(TILE_NUMBER, input_board);
-  Player player1{Color::PLAYER1, {"u"}};
-  Player player2{Color::PLAYER2, {"s"}};
+  Player p1{Color::PLAYER1, {"u"}};
+  Player p2{Color::PLAYER2, {"s"}};
 
-  // ルート作成
-  MCTSNode *root =
-      new MCTSNode(board, player1, player2, Color::PLAYER1, nullptr);
-  root->untried_moves =
-      get_all_legal_moves(root->board, Color::PLAYER1, root->player1);
+  int iterations = 500; // 本番用回数
+  Color turn = Color::PLAYER1;
 
-  MCTSLogger::writeln("Root untried_moves = " +
-                      std::to_string(root->untried_moves.size()));
+  std::cout << "=== Starting MCTS test ===\n";
 
-  // --- MCTS 反復 ---
-  const int ITER = 2000;
-  for (int i = 0; i < ITER; ++i) {
-    /*  MCTSLogger::writeln("\n=== Iteration " + std::to_string(i + 1) + "
-     * ==="); */
+  auto [block_id, x, y, rot] = MCTS(board, p1, p2, turn, iterations);
 
-    // ----- 1. Selection -----
-    MCTSNode *node = root;
-    while (node->untried_moves.empty() && !node->children.empty()) {
-      node = node->select_child(); // ★UCB1で選択
-      /*  MCTSLogger::writeln("[SELECT] moved to node: " + node->move_block_id);
-       */
-    }
+  if (block_id.empty())
+    std::cout << "No valid move found.\n";
+  else
+    std::cout << "Best move: " << block_id << " x=" << x << " y=" << y
+              << " rot=" << rot << "\n";
 
-    // ----- 2. Expansion -----
-    MCTSNode *expanded = nullptr;
-    if (!node->untried_moves.empty()) {
-      expanded = node->expand_node();
-      /*  MCTSLogger::writeln("[EXPAND] expanded move=" +
-       * expanded->move_block_id); */
-      node = expanded;
-    }
-
-    // ----- 3. Simulation -----
-    double result = node->simulate();
-    /*  MCTSLogger::writeln("[SIMULATE] result=" + std::to_string(result)); */
-
-    // ----- 4. Backpropagation -----
-    node->backpropagate(result);
-  }
-
-  // --- 結果表示 ---
-  MCTSLogger::writeln("\n=== Tree summary ===");
-  MCTSLogger::writeln("Root visits=" + std::to_string(root->visit_count));
-
-  /*  for (size_t i = 0; i < root->children.size(); ++i) {
-    MCTSNode *c = root->children[i];
-    MCTSLogger::writeln(" Child #" + std::to_string(i + 1) +
-                        " move=" + c->move_block_id +
-                        " V=" + std::to_string(c->visit_count) +
-                        " W=" + std::to_string(c->win_score));
-  } */
-
-  // メモリ解放
-  delete_subtree(root);
-
-  MCTSLogger::writeln("=== Test finished ===");
-  MCTSLogger::close();
-
-  cout << "Test finished. See mcts_log.txt" << endl;
+  std::cout << "=== Test finished ===\n";
   return 0;
 }
