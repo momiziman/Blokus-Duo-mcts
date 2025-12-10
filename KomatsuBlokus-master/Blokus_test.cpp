@@ -936,7 +936,7 @@ struct MCTSNode {
     // 子を追加
     children.push_back(child);
 
-    // ⭐ ここが重要：子ノードの未展開手（合法手）を計算して設定する
+    // 子ノードの未展開手（合法手）を計算して設定する
     Player *next_player =
         (next_turn == Color::PLAYER1) ? &child->player1 : &child->player2;
     child->untried_moves =
@@ -1043,18 +1043,22 @@ std::tuple<std::string, int, int, int> MCTS(Board root_board, Player root_p1,
 
     MCTSNode *node = root;
     // 1. Selection
+    cout << "[MCTS] Iteration " << iter + 1 << "/" << iterations << "\n";
     while (node->untried_moves.empty() && !node->children.empty()) {
       node = node->select_child();
     }
 
+    // cout << "[MCTS] Expansion phase.\n";
     // 2. Expansion
     if (!node->untried_moves.empty()) {
       node = node->expand_node();
     }
 
+    // cout << "[MCTS] Simulation phase.\n";
     // 3. Simulation
     double result = node->simulate();
 
+    // cout << "[MCTS] Backpropagation phase.\n";
     // 4. Backpropagation
     node->backpropagate(result);
   }
@@ -1065,6 +1069,7 @@ std::tuple<std::string, int, int, int> MCTS(Board root_board, Player root_p1,
   MCTSNode *best_child = nullptr;
   int best_visit = -1;
 
+  cout << "[MCTS] Selecting best move from root children.\n";
   for (auto child : root->children) {
     if (child->visit_count > best_visit) {
       best_visit = child->visit_count;
@@ -1077,6 +1082,15 @@ std::tuple<std::string, int, int, int> MCTS(Board root_board, Player root_p1,
     return {"", -1, -1, 0};
   }
 
+  cout << "delete subtree." << endl;
+  // ツリー解放
+  delete_subtree(root);
+
+  cout << "deleted subtree." << endl;
+
+  cout << "[MCTS] Best move: " << best_child->move_block_id << " ("
+       << best_child->move_x << "," << best_child->move_y
+       << ") rot=" << best_child->move_rot << "\n";
   // 最良手を返す
   return {best_child->move_block_id, best_child->move_x, best_child->move_y,
           best_child->move_rot};
@@ -1128,12 +1142,13 @@ int main() {
   Player p1{Color::PLAYER1, {"u"}};
   Player p2{Color::PLAYER2, {"s"}};
 
-  int iterations = 500; // 本番用回数
+  int iterations = 5000; // 本番用回数
   Color turn = Color::PLAYER1;
 
   std::cout << "=== Starting MCTS test ===\n";
 
   auto [block_id, x, y, rot] = MCTS(board, p1, p2, turn, iterations);
+  std::cout << "MCTS completed.\n";
 
   if (block_id.empty())
     std::cout << "No valid move found.\n";
@@ -1142,5 +1157,16 @@ int main() {
               << " rot=" << rot << "\n";
 
   std::cout << "=== Test finished ===\n";
+
+  // --- ブロックオブジェクトを取得 ---
+  Block block = getBlock(block_id); // BlockData から Block に変換する関数を想定
+
+  // --- 盤面に反映 ---
+  board.change_status(Color::PLAYER1, block, block_id, rot, x, y, p1);
+
+  // --- 更新後の盤面を表示 ---
+  cout << "Player1 board:\n";
+  board.print_status(Color::PLAYER1);
+
   return 0;
 }
