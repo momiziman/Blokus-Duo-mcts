@@ -784,9 +784,6 @@ pair<int, int> random_playout(Board board, Player player1,
       // 盤面を更新（スコアも更新される）
       board.change_status(current_color, block, block_id, rot, x, y,
                           *current_player);
-
-      // NOTE: デバッグ出力は大量になるので標準では出さない
-      // （必要なら MCTSLogger を使ってログに残す）
     }
 
     // 次のプレイヤーに交代
@@ -803,41 +800,6 @@ pair<int, int> random_playout(Board board, Player player1,
   // 最終スコアを返す（コピーされた player1/player2 の score を返す）
   return {player1.score, player2.score};
 }
-
-class MCTSLogger {
-public:
-  static std::ofstream log_file;
-
-  static void init(const std::string &filename) {
-    // 追記モードに変更して絶対パスもそのまま使える
-    log_file.open(filename, std::ios::out | std::ios::app);
-    if (!log_file.is_open()) {
-      std::cerr << "Failed to open log file: " << filename << std::endl;
-    } else {
-      log_file << "=== Logging started ===\n";
-    }
-  }
-
-  static void close() {
-    if (log_file.is_open()) {
-      log_file << "=== Logging ended ===\n";
-      log_file.close();
-    }
-  }
-
-  template <typename T> static void write(const T &msg) {
-    if (log_file.is_open())
-      log_file << msg;
-  }
-
-  template <typename T> static void writeln(const T &msg) {
-    if (log_file.is_open())
-      log_file << msg << "\n";
-  }
-};
-
-// staticメンバ定義
-std::ofstream MCTSLogger::log_file;
 
 struct MCTSNode {
   Board board;
@@ -874,10 +836,6 @@ struct MCTSNode {
                    C * std::sqrt(std::log(visit_count + 1) /
                                  (child->visit_count + 1e-6));
 
-      /*MCTSLogger::writeln(" UCB=" + std::to_string(ucb) +
-                          " W=" + std::to_string(child->win_score) +
-                          " V=" + std::to_string(child->visit_count)); */
-
       if (ucb > best_value) {
         best_value = ucb;
         best = child;
@@ -889,7 +847,7 @@ struct MCTSNode {
   // --- Expansion: 未展開手から子ノードを生成 ---
   MCTSNode *expand_node() {
     if (untried_moves.empty()) {
-      MCTSLogger::writeln("[EXPAND] No untried moves.");
+
       return this;
     }
 
@@ -899,10 +857,6 @@ struct MCTSNode {
 
     int idx = dis(gen);
     auto [block_id, x, y, rot] = untried_moves[idx];
-
-    /*  MCTSLogger::writeln("[EXPAND] Expanding move: " + block_id + " (" +
-                        std::to_string(x) + "," + std::to_string(y) +
-                        ") rot=" + std::to_string(rot));  */
 
     // 選んだ手を未展開リストから削除
     untried_moves.erase(untried_moves.begin() + idx);
@@ -942,16 +896,11 @@ struct MCTSNode {
     child->untried_moves =
         get_all_legal_moves(child->board, next_turn, *next_player);
 
-    /*  MCTSLogger::writeln("[EXPAND] child->untried_moves = " +
-                        std::to_string(child->untried_moves.size())); */
-
     return child;
   }
 
   // --- Simulation: playout の呼び出し ---
   double simulate() {
-    /*  MCTSLogger::writeln("[SIMULATE] start");
-    log_node_basic(this); */
 
     Board sim_board = board;
     Player sim_p1 = player1;
@@ -961,27 +910,17 @@ struct MCTSNode {
 
     double result = (score1 > score2) ? 1.0 : (score1 == score2 ? 0.5 : 0.0);
 
-    /*  MCTSLogger::writeln("[SIMULATE] score1=" + std::to_string(score1) +
-                        " score2=" + std::to_string(score2) +
-                        " result=" + std::to_string(result)); */
-
     return result;
   }
 
   // --- Backpropagation ---
   void backpropagate(double result) {
-    /*  MCTSLogger::writeln("[BACKPROP] Result=" + std::to_string(result)); */
 
     MCTSNode *node = this;
     while (node != nullptr) {
-      /*  MCTSLogger::writeln(" Before: W=" + std::to_string(node->win_score) +
-                          " V=" + std::to_string(node->visit_count)); */
 
       node->visit_count++;
       node->win_score += result;
-
-      /*  MCTSLogger::writeln(" After: W=" + std::to_string(node->win_score) +
-                          " V=" + std::to_string(node->visit_count));  */
 
       node = node->parent;
     }
@@ -995,20 +934,6 @@ void delete_subtree(MCTSNode *node) {
     delete_subtree(child);
   }
   delete node;
-}
-
-void log_node_basic(const MCTSNode *node) {
-  MCTSLogger::writeln("----- NODE INFO -----");
-  MCTSLogger::writeln("Children: " + std::to_string(node->children.size()));
-  MCTSLogger::writeln("Visits: " + std::to_string(node->visit_count));
-  MCTSLogger::writeln("Wins: " + std::to_string(node->win_score));
-  MCTSLogger::writeln("Move: " + node->move_block_id + " (" +
-                      std::to_string(node->move_x) + "," +
-                      std::to_string(node->move_y) +
-                      ") rot=" + std::to_string(node->move_rot));
-  MCTSLogger::writeln("Untried moves: " +
-                      std::to_string(node->untried_moves.size()));
-  MCTSLogger::writeln("----------------------");
 }
 
 // ============================
@@ -1031,6 +956,10 @@ std::tuple<std::string, int, int, int> MCTS(Board root_board, Player root_p1,
   if (root->untried_moves.empty()) {
     std::cout << "[MCTS] No moves available.\n";
     return {"", -1, -1, 0};
+  }
+
+  while (!root->untried_moves.empty()) {
+    root->expand_node();
   }
 
   std::random_device rd;
@@ -1082,16 +1011,16 @@ std::tuple<std::string, int, int, int> MCTS(Board root_board, Player root_p1,
     return {"", -1, -1, 0};
   }
 
-  cout << "delete subtree." << endl;
-  // ツリー解放
-  delete_subtree(root);
-
-  cout << "deleted subtree." << endl;
-
   cout << "[MCTS] Best move: " << best_child->move_block_id << " ("
        << best_child->move_x << "," << best_child->move_y
        << ") rot=" << best_child->move_rot << "\n";
   // 最良手を返す
+
+  cout << "delete subtree." << endl;
+  // ツリー解放
+  delete_subtree(root);
+  cout << "deleted subtree." << endl;
+
   return {best_child->move_block_id, best_child->move_x, best_child->move_y,
           best_child->move_rot};
 }
@@ -1142,7 +1071,7 @@ int main() {
   Player p1{Color::PLAYER1, {"u"}};
   Player p2{Color::PLAYER2, {"s"}};
 
-  int iterations = 5000; // 本番用回数
+  int iterations = 10000; // 本番用回数
   Color turn = Color::PLAYER1;
 
   std::cout << "=== Starting MCTS test ===\n";
