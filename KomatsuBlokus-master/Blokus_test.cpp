@@ -420,8 +420,8 @@ struct Block {
       break;
 
     case 1:                               // 裏向き
-      shape = rot90(transpose(shape), 3); // Pythonでは -1
-      influence = rot90(transpose(influence), 3);
+      shape = rot90(transpose(shape), 1); // Pythonでは -1
+      influence = rot90(transpose(influence), 1);
       break;
 
     case 2: // 初期向きから90°時計回り
@@ -440,8 +440,8 @@ struct Block {
       break;
 
     case 5: // 裏向きから180°反時計回り
-      shape = rot90(transpose(shape), 1);
-      influence = rot90(transpose(influence), 1);
+      shape = rot90(transpose(shape), 3);
+      influence = rot90(transpose(influence), 3);
       break;
 
     case 6: // 初期向きから270°時計回り
@@ -813,6 +813,8 @@ struct MCTSNode {
   int visit_count;
   double win_score;
 
+  int depth;
+
   std::vector<std::tuple<std::string, int, int, int>> untried_moves;
 
   // このノードへの着手
@@ -823,7 +825,9 @@ struct MCTSNode {
            MCTSNode *parent = nullptr)
       : board(b), player1(p1), player2(p2), current_player(turn),
         parent(parent), visit_count(0), win_score(0.0), move_x(-1), move_y(-1),
-        move_rot(0), move_block_id("") {}
+        move_rot(0), move_block_id("") {
+    depth = (parent == nullptr) ? 0 : parent->depth + 1;
+  }
 
   // --- Selection: UCB1 で子ノード選択 ---
   MCTSNode *select_child() {
@@ -941,7 +945,8 @@ void delete_subtree(MCTSNode *node) {
 // ============================
 std::tuple<std::string, int, int, int> MCTS(Board root_board, Player root_p1,
                                             Player root_p2, Color root_turn,
-                                            int iterations) {
+                                            int iterations,
+                                            int MAX_TREE_DEPTH) {
   // --- ルートノード作成 ---
   MCTSNode *root = new MCTSNode(root_board, root_p1, root_p2, root_turn);
 
@@ -973,13 +978,14 @@ std::tuple<std::string, int, int, int> MCTS(Board root_board, Player root_p1,
     MCTSNode *node = root;
     // 1. Selection
     cout << "[MCTS] Iteration " << iter + 1 << "/" << iterations << "\n";
-    while (node->untried_moves.empty() && !node->children.empty()) {
+    while (node->depth < MAX_TREE_DEPTH && node->untried_moves.empty() &&
+           !node->children.empty()) {
       node = node->select_child();
     }
 
     // cout << "[MCTS] Expansion phase.\n";
     // 2. Expansion
-    if (!node->untried_moves.empty()) {
+    if (node->depth < MAX_TREE_DEPTH && !node->untried_moves.empty()) {
       node = node->expand_node();
     }
 
@@ -1027,6 +1033,8 @@ std::tuple<std::string, int, int, int> MCTS(Board root_board, Player root_p1,
 
 int main() {
   const int TILE_NUMBER = 14;
+  const int MAX_TREE_DEPTH = 100;
+  int iterations = 100; // 試行回数
 
   // --- 盤面初期化 ---
   vector<vector<vector<int>>> input_board = {
@@ -1071,12 +1079,12 @@ int main() {
   Player p1{Color::PLAYER1, {"u"}};
   Player p2{Color::PLAYER2, {"s"}};
 
-  int iterations = 10000; // 本番用回数
   Color turn = Color::PLAYER1;
 
   std::cout << "=== Starting MCTS test ===\n";
 
-  auto [block_id, x, y, rot] = MCTS(board, p1, p2, turn, iterations);
+  auto [block_id, x, y, rot] =
+      MCTS(board, p1, p2, turn, iterations, MAX_TREE_DEPTH);
   std::cout << "MCTS completed.\n";
 
   if (block_id.empty())
