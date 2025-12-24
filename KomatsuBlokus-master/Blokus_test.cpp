@@ -1071,7 +1071,7 @@ int main() {
   Player p1{Color::PLAYER1, {"u"}};
   Player p2{Color::PLAYER2, {"s"}};
 
-  int iterations = 10000; // 本番用回数
+  int iterations = 100; // 本番用回数
   Color turn = Color::PLAYER1;
 
   std::cout << "=== Starting MCTS test ===\n";
