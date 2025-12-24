@@ -462,7 +462,7 @@ BlockData getBlock(const std::string &id) {
 
 int main() {
   // ブロック"t"を取得
-  const auto &data = block_table.at("t");
+  const auto &data = block_table.at("n");
   Block block(data);
 
   // 各方向に回転して表示
