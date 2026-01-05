@@ -1230,7 +1230,6 @@ int main() {
 
     int iterations = 100; // 本番用回数
     Color turn = Color::PLAYER1;
-    Color turn = Color::PLAYER1;
 
     std::cout << "=== Starting MCTS test ===\n";
 
