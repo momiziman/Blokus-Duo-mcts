@@ -1248,39 +1248,36 @@ int main() {
        {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
        {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}}};
 
-  for (int i = 0; i < 10; i++) {
-    // Board / Player 初期化
-    Board board(TILE_NUMBER, input_board);
-    Player p1{Color::PLAYER1, {"u"}};
-    Player p2{Color::PLAYER2, {"s"}};
+  Board board(TILE_NUMBER, input_board);
 
-    Color turn = Color::PLAYER1;
+  // --- テスト用ブロック ---
+  std::string block_id = "t"; // 任意（例：5マスブロック）
+  Block block(getBlock(block_id));
+  block.rotate_block(0);
 
-    std::cout << "=== Starting MCTS test ===\n";
+  cout << "=== Board (PLAYER1) ===\n";
+  board.print_status(Color::PLAYER1);
 
-    auto [block_id, x, y, rot] =
-        MCTS(board, p1, p2, turn, iterations, MAX_TREE_DEPTH);
-    std::cout << "MCTS completed.\n";
+  // --- 通常探索 ---
+  auto full_positions =
+      board.search_settable_position(Color::PLAYER1, block.shape);
 
-    if (block_id.empty())
-      std::cout << "No valid move found.\n";
-    else
-      std::cout << "Best move: " << block_id << " x=" << x << " y=" << y
-                << " rot=" << rot << "\n";
+  // --- ABLESET 周囲探索 ---
+  auto near_positions =
+      board.search_settable_position_near_ableset(Color::PLAYER1, block.shape);
 
-    std::cout << "=== Test finished ===\n";
-
-    // --- ブロックオブジェクトを取得 ---
-    Block block =
-        getBlock(block_id); // BlockData から Block に変換する関数を想定
-
-    // --- 盤面に反映 ---
-    board.change_status(Color::PLAYER1, block, block_id, rot, x, y, p1);
-
-    // --- 更新後の盤面を表示 ---
-    cout << "Player1 board:\n";
-    board.print_status(Color::PLAYER1);
+  cout << "\n[Full search] positions = " << full_positions.size() << "\n";
+  for (auto &[x, y] : full_positions) {
+    cout << "(" << x << "," << y << ") ";
   }
+  cout << "\n";
+
+  cout << "\n[Near ABLESET search] positions = " << near_positions.size()
+       << "\n";
+  for (auto &[x, y] : near_positions) {
+    cout << "(" << x << "," << y << ") ";
+  }
+  cout << "\n";
 
   return 0;
 }
