@@ -749,6 +749,47 @@ get_all_legal_moves(Board &board, Color player_color, Player &player) {
   return legal_moves;
 }
 
+vector<tuple<string, int, int, int>> get_fast_legal_moves(Board &board,
+                                                          Color color,
+                                                          Player &player,
+                                                          int max_moves = 30) {
+
+  vector<tuple<string, int, int, int>> moves;
+
+  vector<string> unused_blocks;
+  for (auto &[id, _] : block_table) {
+    if (find(player.used_blocks.begin(), player.used_blocks.end(), id) ==
+        player.used_blocks.end()) {
+      unused_blocks.push_back(id);
+    }
+  }
+
+  // 大きいブロック優先
+  sort(unused_blocks.begin(), unused_blocks.end(),
+       [&](const string &a, const string &b) {
+         return getBlock(a).score > getBlock(b).score;
+       });
+
+  for (auto &block_id : unused_blocks) {
+    Block base(getBlock(block_id));
+
+    for (int rot = 0; rot < 8; rot++) {
+      Block tmp = base;
+      tmp.rotate_block(rot);
+
+      auto positions =
+          board.search_settable_position_near_ableset(color, tmp.shape);
+
+      for (auto &[x, y] : positions) {
+        moves.emplace_back(block_id, x, y, rot);
+        if ((int)moves.size() >= max_moves)
+          return moves;
+      }
+    }
+  }
+  return moves;
+}
+
 // Player クラスの used_blocks を考慮して合法手リストを取得（x,yを除く）
 vector<pair<string, int>>
 get_legal_moves_no_pos(Board &board, Color player_color, Player &player) {
@@ -977,111 +1018,46 @@ struct MCTSNode {
   }
 
   double fast_simulation(Board board, Player p1, Player p2, Color start_turn,
-                         int max_steps = 30) {
-    static thread_local std::mt19937 gen((std::random_device())());
+                         int max_steps = 40) {
 
-    int pass_count = 0;
-
+    static thread_local mt19937 gen(random_device{}());
     Color turn = start_turn;
+    int pass_count = 0;
 
     for (int step = 0; step < max_steps; step++) {
 
       Player *cur = (turn == Color::PLAYER1) ? &p1 : &p2;
 
-      // --- 未使用ブロック候補 ---
-      std::vector<std::string> candidates;
-      for (auto &id : BLOCK_IDS_BY_SIZE) {
-        if (std::find(cur->used_blocks.begin(), cur->used_blocks.end(), id) ==
-            cur->used_blocks.end()) {
-          candidates.push_back(id);
-        }
-      }
+      auto moves = get_fast_legal_moves(board, turn, *cur);
 
-      if (candidates.empty())
-        break;
-
-      bool placed = false;
-      /* ====== ① ランダム試行 ====== */
-      for (auto &block_id : candidates) {
-        Block block(getBlock(block_id));
-
-        std::array<int, 8> rots{0, 1, 2, 3, 4, 5, 6, 7};
-        std::shuffle(rots.begin(), rots.end(), gen);
-
-        for (int rot : rots) {
-          Block tmp = block;
-          tmp.rotate_block(rot);
-
-          for (int trial = 0; trial < 5; trial++) {
-            int x = gen() % board.TILE_NUMBER + 1;
-            int y = gen() % board.TILE_NUMBER + 1;
-
-            if (board.settable_check(turn, tmp.shape, x, y)) {
-              board.change_status(turn, tmp, block_id, rot, x, y, *cur);
-              placed = true;
-              break;
-            }
-          }
-          if (placed)
-            break;
-        }
-        if (placed)
-          break;
-      }
-
-      /* ====== ② 保険探索　====== */
-      if (!placed) {
-        for (auto &block_id : candidates) {
-          Block block(getBlock(block_id));
-
-          for (int rot = 0; rot < 8; rot++) {
-            Block tmp = block;
-            tmp.rotate_block(rot);
-
-            // 盤面から既存ブロック近傍をランダムに10点抽出
-            for (int trial = 0; trial < 10; trial++) {
-              int x = 1 + gen() % board.TILE_NUMBER;
-              int y = 1 + gen() % board.TILE_NUMBER;
-
-              if (board.settable_check(turn, tmp.shape, x, y)) {
-                board.change_status(turn, tmp, block_id, rot, x, y, *cur);
-                placed = true;
-                break;
-              }
-            }
-            if (placed)
-              break;
-          }
-          if (placed)
-            break;
-        }
-      }
-
-      /* ====== ③ パス判定ログ ====== */
-      if (!placed) {
+      if (moves.empty()) {
         pass_count++;
+        cout << "[FAST_SIM] PASS: "
+             << ((turn == Color::PLAYER1) ? "PLAYER1" : "PLAYER2")
+             << " step=" << step << endl;
 
-        /* std::cout << "[FAST_SIM] PASS: "
-                  << ((turn == Color::PLAYER1) ? "PLAYER1" : "PLAYER2")
-                  << " (step=" << step << ", candidates=" << candidates.size()
-                  << ", pass_count=" << pass_count << ")\n"; */
+        if (pass_count >= 2)
+          break;
       } else {
         pass_count = 0;
+
+        uniform_int_distribution<> dis(0, moves.size() - 1);
+        auto [id, x, y, rot] = moves[dis(gen)];
+
+        Block blk(getBlock(id));
+        blk.rotate_block(rot);
+
+        board.change_status(turn, blk, id, rot, x, y, *cur);
       }
 
-      if (pass_count >= 2) {
-        // std::cout << "[FAST_SIM] END: consecutive pass\n";
-        break;
-      }
-
-      turn = (turn == Color::PLAYER1) ? Color::PLAYER2 : Color::PLAYER1;
-
-      // どのブロックも置けなければパス
       turn = (turn == Color::PLAYER1) ? Color::PLAYER2 : Color::PLAYER1;
     }
 
-    // --- 評価（超軽量） ---
-    return (p1.score > p2.score) ? 1.0 : (p1.score == p2.score) ? 0.5 : 0.0;
+    if (p1.score > p2.score)
+      return 1.0;
+    if (p1.score < p2.score)
+      return 0.0;
+    return 0.5;
   }
 
   // --- Backpropagation ---
@@ -1248,36 +1224,39 @@ int main() {
        {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
        {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}}};
 
-  Board board(TILE_NUMBER, input_board);
+  for (int i = 0; i < 10; i++) {
+    // Board / Player 初期化
+    Board board(TILE_NUMBER, input_board);
+    Player p1{Color::PLAYER1, {"u"}};
+    Player p2{Color::PLAYER2, {"s"}};
 
-  // --- テスト用ブロック ---
-  std::string block_id = "t"; // 任意（例：5マスブロック）
-  Block block(getBlock(block_id));
-  block.rotate_block(0);
+    Color turn = Color::PLAYER1;
 
-  cout << "=== Board (PLAYER1) ===\n";
-  board.print_status(Color::PLAYER1);
+    std::cout << "=== Starting MCTS test ===\n";
 
-  // --- 通常探索 ---
-  auto full_positions =
-      board.search_settable_position(Color::PLAYER1, block.shape);
+    auto [block_id, x, y, rot] =
+        MCTS(board, p1, p2, turn, iterations, MAX_TREE_DEPTH);
+    std::cout << "MCTS completed.\n";
 
-  // --- ABLESET 周囲探索 ---
-  auto near_positions =
-      board.search_settable_position_near_ableset(Color::PLAYER1, block.shape);
+    if (block_id.empty())
+      std::cout << "No valid move found.\n";
+    else
+      std::cout << "Best move: " << block_id << " x=" << x << " y=" << y
+                << " rot=" << rot << "\n";
 
-  cout << "\n[Full search] positions = " << full_positions.size() << "\n";
-  for (auto &[x, y] : full_positions) {
-    cout << "(" << x << "," << y << ") ";
+    std::cout << "=== Test finished ===\n";
+
+    // --- ブロックオブジェクトを取得 ---
+    Block block =
+        getBlock(block_id); // BlockData から Block に変換する関数を想定
+
+    // --- 盤面に反映 ---
+    board.change_status(Color::PLAYER1, block, block_id, rot, x, y, p1);
+
+    // --- 更新後の盤面を表示 ---
+    cout << "Player1 board:\n";
+    board.print_status(Color::PLAYER1);
   }
-  cout << "\n";
-
-  cout << "\n[Near ABLESET search] positions = " << near_positions.size()
-       << "\n";
-  for (auto &[x, y] : near_positions) {
-    cout << "(" << x << "," << y << ") ";
-  }
-  cout << "\n";
 
   return 0;
 }
