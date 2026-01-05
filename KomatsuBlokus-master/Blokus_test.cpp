@@ -348,11 +348,16 @@ const std::unordered_map<std::string, BlockData> block_table = {
 
 };
 
+const int PLAYOUT_DEPTH = 8;
 constexpr int TILE_NUMBER = 14;
 constexpr int COLOR_NUM = 2;
 constexpr int BOARD_SIZE = TILE_NUMBER + 2; // 壁を含めたサイズ
 
 constexpr double MAX_SCORE = 89.0;
+
+enum class AIType { RANDOM, MCTS };
+
+enum class GameResult { P1_WIN, P2_WIN, DRAW };
 
 enum TileState {
   BLANK = 0,
@@ -903,6 +908,49 @@ pair<int, int> random_playout(Board board, Player player1,
   return {player1.score, player2.score};
 }
 
+int mobility(Board &board, Color c, Player &p) {
+  return get_fast_legal_moves(board, c, p, 50).size();
+}
+
+double evaluate(Board &board, Player &p1, Player &p2) {
+  int cant_p1 = 0, able_p1 = 0;
+  int cant_p2 = 0, able_p2 = 0;
+
+  int c = static_cast<int>(Color::PLAYER1);
+  int opc = static_cast<int>(Color::PLAYER2);
+
+  for (int y = 1; y <= board.TILE_NUMBER; y++) {
+    for (int x = 1; x <= board.TILE_NUMBER; x++) {
+
+      if (board.status[c][y][x] == Board::CANTSET)
+        cant_p1++;
+      if (board.status[c][y][x] == Board::ABLESET)
+        able_p1++;
+
+      if (board.status[opc][y][x] == Board::CANTSET)
+        cant_p2++;
+      if (board.status[opc][y][x] == Board::ABLESET)
+        able_p2++;
+    }
+  }
+
+  // --- 正規化 ---
+  double score_norm = (p1.score - p2.score) / 89.0;
+  double able_norm = (able_p1 - able_p2) / 196.0;
+  double cant_norm = (cant_p1 - cant_p2) / 196.0;
+  double mobility_norm = (mobility(board, Color::PLAYER1, p1) -
+                          mobility(board, Color::PLAYER2, p2)) /
+                         50.0;
+  // --- 重み ---
+  const double w_score = 1.0;
+  const double w_able = 0.4;
+  const double w_cant = 0.1;
+  const double w_mobility = 0.5;
+
+  return w_score * score_norm + w_able * able_norm - w_cant * cant_norm +
+         w_mobility * mobility_norm;
+}
+
 struct MCTSNode {
   Board board;
   Player player1;
@@ -953,7 +1001,6 @@ struct MCTSNode {
   // --- Expansion: 未展開手から子ノードを生成 ---
   MCTSNode *expand_node() {
     if (untried_moves.empty()) {
-
       return this;
     }
 
@@ -1058,15 +1105,35 @@ struct MCTSNode {
     return diff / MAX_SCORE;
   }
 
+  double heuristic_playout(Board board, Player p1, Player p2, Color turn) {
+    for (int depth = 0; depth < PLAYOUT_DEPTH; depth++) {
+
+      Player *cur = (turn == Color::PLAYER1) ? &p1 : &p2;
+
+      auto moves = get_fast_legal_moves(board, turn, *cur, 20);
+      if (moves.empty())
+        break;
+
+      auto [block_id, x, y, rot] = moves[rand() % moves.size()];
+
+      Block blk(getBlock(block_id));
+      blk.rotate_block(rot);
+      board.change_status(turn, blk, block_id, rot, x, y, *cur);
+
+      turn = (turn == Color::PLAYER1) ? Color::PLAYER2 : Color::PLAYER1;
+    }
+
+    return evaluate(board, p1, p2);
+  }
+
   // --- Backpropagation ---
   void backpropagate(double result) {
-
     MCTSNode *node = this;
+    double r = result;
     while (node != nullptr) {
-
       node->visit_count++;
-      node->win_score += result;
-
+      node->win_score -= r;
+      r = -r; // 手番が変わるごとに反転
       node = node->parent;
     }
   }
@@ -1118,7 +1185,7 @@ std::tuple<std::string, int, int, int> MCTS(Board root_board, Player root_p1,
 
     MCTSNode *node = root;
     // 1. Selection
-    cout << "[MCTS] Iteration " << iter + 1 << "/" << iterations << "\n";
+    // cout << "[MCTS] Iteration " << iter + 1 << "/" << iterations << "\n";
     while (node->depth < MAX_TREE_DEPTH && node->untried_moves.empty() &&
            !node->children.empty()) {
       node = node->select_child();
@@ -1132,8 +1199,8 @@ std::tuple<std::string, int, int, int> MCTS(Board root_board, Player root_p1,
 
     // cout << "[MCTS] Simulation phase.\n";
     // 3. Simulation
-    double result = node->fast_simulation(node->board, node->player1,
-                                          node->player2, node->current_player);
+    double result = node->heuristic_playout(
+        node->board, node->player1, node->player2, node->current_player);
 
     // cout << "[MCTS] Backpropagation phase.\n";
     // 4. Backpropagation
@@ -1169,17 +1236,73 @@ std::tuple<std::string, int, int, int> MCTS(Board root_board, Player root_p1,
        << ") rot=" << best_child->move_rot << "\n";
   // 最良手を返す
 
-  cout << "delete subtree." << endl;
   // ツリー解放
   delete_subtree(root);
-  cout << "deleted subtree." << endl;
 
   return {best_block_id, best_x, best_y, best_rot};
 }
 
+GameResult play_game(Board board, Player p1, Player p2, Color start_turn,
+                     AIType p1_ai, AIType p2_ai, int mcts_iterations,
+                     int max_tree_depth) {
+
+  Color turn = start_turn;
+  int pass_count = 0;
+
+  static std::mt19937 gen(std::random_device{}());
+
+  while (true) {
+
+    Player *current = (turn == Color::PLAYER1) ? &p1 : &p2;
+    AIType ai_type = (turn == Color::PLAYER1) ? p1_ai : p2_ai;
+
+    auto legal = get_all_legal_moves(board, turn, *current);
+
+    if (legal.empty()) {
+      pass_count++;
+      if (pass_count >= 2)
+        break;
+    } else {
+      pass_count = 0;
+
+      std::string block_id;
+      int x, y, rot;
+
+      if (ai_type == AIType::MCTS) {
+
+        std::tie(block_id, x, y, rot) =
+            MCTS(board, p1, p2, turn, mcts_iterations, max_tree_depth);
+
+      } else { // RANDOM
+
+        std::uniform_int_distribution<> dis(0, legal.size() - 1);
+        std::tie(block_id, x, y, rot) = legal[dis(gen)];
+      }
+
+      if (!block_id.empty()) {
+        Block blk(getBlock(block_id));
+        board.change_status(turn, blk, block_id, rot, x, y, *current);
+        if (turn == Color::PLAYER1) {
+          cout << "PLAYER1 placed block " << block_id << " at (" << x << ","
+               << y << ") with rotation " << rot << "\n";
+          board.print_status(turn);
+        }
+      }
+    }
+
+    turn = (turn == Color::PLAYER1) ? Color::PLAYER2 : Color::PLAYER1;
+  }
+
+  if (p1.score > p2.score)
+    return GameResult::P1_WIN;
+  if (p2.score > p1.score)
+    return GameResult::P2_WIN;
+  return GameResult::DRAW;
+}
+
 int main() {
   const int TILE_NUMBER = 14;
-  const int MAX_TREE_DEPTH = 6;
+  const int MAX_TREE_DEPTH = 7;
   int iterations = 300; // 試行回数
 
   init_block_ids_by_size();
@@ -1222,40 +1345,23 @@ int main() {
        {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
        {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}}};
 
-  for (int i = 0; i < 10; i++) {
-    // Board / Player 初期化
+  int win = 0;
+  int N = 25;
+
+  for (int i = 0; i < N; i++) {
+
     Board board(TILE_NUMBER, input_board);
     Player p1{Color::PLAYER1, {"u"}};
     Player p2{Color::PLAYER2, {"s"}};
 
-    int iterations = 100; // 本番用回数
-    Color turn = Color::PLAYER1;
+    auto result = play_game(board, p1, p2, Color::PLAYER1, AIType::MCTS,
+                            AIType::RANDOM, iterations, MAX_TREE_DEPTH);
 
-    std::cout << "=== Starting MCTS test ===\n";
-
-    auto [block_id, x, y, rot] =
-        MCTS(board, p1, p2, turn, iterations, MAX_TREE_DEPTH);
-    std::cout << "MCTS completed.\n";
-
-    if (block_id.empty())
-      std::cout << "No valid move found.\n";
-    else
-      std::cout << "Best move: " << block_id << " x=" << x << " y=" << y
-                << " rot=" << rot << "\n";
-
-    std::cout << "=== Test finished ===\n";
-
-    // --- ブロックオブジェクトを取得 ---
-    Block block =
-        getBlock(block_id); // BlockData から Block に変換する関数を想定
-
-    // --- 盤面に反映 ---
-    board.change_status(Color::PLAYER1, block, block_id, rot, x, y, p1);
-
-    // --- 更新後の盤面を表示 ---
-    cout << "Player1 board:\n";
-    board.print_status(Color::PLAYER1);
+    if (result == GameResult::P1_WIN)
+      win++;
   }
+
+  cout << "P1 win rate = " << (double)win / N << endl;
 
   return 0;
 }
