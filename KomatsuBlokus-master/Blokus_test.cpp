@@ -352,6 +352,8 @@ constexpr int TILE_NUMBER = 14;
 constexpr int COLOR_NUM = 2;
 constexpr int BOARD_SIZE = TILE_NUMBER + 2; // 壁を含めたサイズ
 
+constexpr double MAX_SCORE = 89.0;
+
 enum TileState {
   BLANK = 0,
   CANTSET = 1,
@@ -557,6 +559,49 @@ public:
     return res;
   }
 
+  vector<pair<int, int>> search_settable_position_near_ableset(
+      Color color, const vector<vector<int>> &block_shape) {
+    vector<pair<int, int>> res;
+    int col = static_cast<int>(color);
+
+    int H = block_shape.size();
+    int W = block_shape[0].size();
+
+    std::set<pair<int, int>> candidates; // 重複防止
+
+    // --- ABLESET を起点に候補座標を収集 ---
+    for (int y = 1; y <= TILE_NUMBER; ++y) {
+      for (int x = 1; x <= TILE_NUMBER; ++x) {
+
+        if (status[col][y][x] != ABLESET)
+          continue;
+
+        // 周囲5マス（中心含む）
+        for (int dy = -2; dy <= 2; ++dy) {
+          for (int dx = -2; dx <= 2; ++dx) {
+            int ny = y + dy;
+            int nx = x + dx;
+
+            if (1 <= ny && ny <= TILE_NUMBER && 1 <= nx && nx <= TILE_NUMBER) {
+              candidates.insert({nx, ny});
+            }
+          }
+        }
+      }
+    }
+
+    // --- 実際に置けるかチェック ---
+    for (auto &[x, y] : candidates) {
+      if (status[col][y][x] != CANTSET) {
+        if (settable_check(color, block_shape, x, y)) {
+          res.push_back({x, y});
+        }
+      }
+    }
+
+    return res;
+  }
+
   // Boardクラス内
   void change_status(Color color, Block &block, const std::string &block_id,
                      int rotation, int x, int y, Player &player) {
@@ -693,8 +738,9 @@ get_all_legal_moves(Board &board, Color player_color, Player &player) {
       Block tmp_block = block;
       tmp_block.rotate_block(rot);
 
-      auto positions =
-          board.search_settable_position(player_color, tmp_block.shape);
+      auto positions = board.search_settable_position_near_ableset(
+          player_color, tmp_block.shape);
+      // board.search_settable_position_near_ableset(player_color,tmp_block.shape);
 
       for (auto &[x, y] : positions) {
         legal_moves.emplace_back(block_id, x, y, rot);
@@ -703,6 +749,47 @@ get_all_legal_moves(Board &board, Color player_color, Player &player) {
   }
 
   return legal_moves;
+}
+
+vector<tuple<string, int, int, int>> get_fast_legal_moves(Board &board,
+                                                          Color color,
+                                                          Player &player,
+                                                          int max_moves = 30) {
+
+  vector<tuple<string, int, int, int>> moves;
+
+  vector<string> unused_blocks;
+  for (auto &[id, _] : block_table) {
+    if (find(player.used_blocks.begin(), player.used_blocks.end(), id) ==
+        player.used_blocks.end()) {
+      unused_blocks.push_back(id);
+    }
+  }
+
+  // 大きいブロック優先
+  sort(unused_blocks.begin(), unused_blocks.end(),
+       [&](const string &a, const string &b) {
+         return getBlock(a).score > getBlock(b).score;
+       });
+
+  for (auto &block_id : unused_blocks) {
+    Block base(getBlock(block_id));
+
+    for (int rot = 0; rot < 8; rot++) {
+      Block tmp = base;
+      tmp.rotate_block(rot);
+
+      auto positions =
+          board.search_settable_position_near_ableset(color, tmp.shape);
+
+      for (auto &[x, y] : positions) {
+        moves.emplace_back(block_id, x, y, rot);
+        if ((int)moves.size() >= max_moves)
+          return moves;
+      }
+    }
+  }
+  return moves;
 }
 
 // Player クラスの used_blocks を考慮して合法手リストを取得（x,yを除く）
@@ -933,112 +1020,42 @@ struct MCTSNode {
   }
 
   double fast_simulation(Board board, Player p1, Player p2, Color start_turn,
-                         int max_steps = 30) {
-    static thread_local std::mt19937 gen((std::random_device())());
+                         int max_steps = 40) {
 
-    int pass_count = 0;
-
+    static thread_local mt19937 gen(random_device{}());
     Color turn = start_turn;
+    int pass_count = 0;
 
     for (int step = 0; step < max_steps; step++) {
 
       Player *cur = (turn == Color::PLAYER1) ? &p1 : &p2;
 
-      // --- 未使用ブロック候補 ---
-      std::vector<std::string> candidates;
-      for (auto &id : BLOCK_IDS_BY_SIZE) {
-        if (std::find(cur->used_blocks.begin(), cur->used_blocks.end(), id) ==
-            cur->used_blocks.end()) {
-          candidates.push_back(id);
-        }
-      }
+      auto moves = get_fast_legal_moves(board, turn, *cur);
 
-      if (candidates.empty())
-        break;
-
-      bool placed = false;
-
-      /* ====== ① ランダム試行 ====== */
-      for (auto &block_id : candidates) {
-        Block block(getBlock(block_id));
-
-        std::array<int, 8> rots{0, 1, 2, 3, 4, 5, 6, 7};
-        std::shuffle(rots.begin(), rots.end(), gen);
-
-        for (int rot : rots) {
-          Block tmp = block;
-          tmp.rotate_block(rot);
-
-          for (int trial = 0; trial < 5; trial++) {
-            int x = gen() % board.TILE_NUMBER + 1;
-            int y = gen() % board.TILE_NUMBER + 1;
-
-            if (board.settable_check(turn, tmp.shape, x, y)) {
-              board.change_status(turn, tmp, block_id, rot, x, y, *cur);
-              placed = true;
-              break;
-            }
-          }
-          if (placed)
-            break;
-        }
-        if (placed)
-          break;
-      }
-
-      /* ====== ② 保険探索（軽量） ====== */
-      if (!placed) {
-        for (auto &block_id : candidates) {
-          Block block(getBlock(block_id));
-
-          for (int rot = 0; rot < 8; rot++) {
-            Block tmp = block;
-            tmp.rotate_block(rot);
-
-            // 盤面から既存ブロック近傍をランダムに10点抽出
-            for (int trial = 0; trial < 10; trial++) {
-              int x = 1 + gen() % board.TILE_NUMBER;
-              int y = 1 + gen() % board.TILE_NUMBER;
-
-              if (board.settable_check(turn, tmp.shape, x, y)) {
-                board.change_status(turn, tmp, block_id, rot, x, y, *cur);
-                placed = true;
-                break;
-              }
-            }
-            if (placed)
-              break;
-          }
-          if (placed)
-            break;
-        }
-      }
-
-      /* ====== ③ パス判定ログ ====== */
-      if (!placed) {
+      if (moves.empty()) {
         pass_count++;
-
-        /* std::cout << "[FAST_SIM] PASS: "
-                  << ((turn == Color::PLAYER1) ? "PLAYER1" : "PLAYER2")
-                  << " (step=" << step << ", candidates=" << candidates.size()
-                  << ", pass_count=" << pass_count << ")\n"; */
+        if (pass_count >= 2)
+          break;
       } else {
         pass_count = 0;
+
+        uniform_int_distribution<> dis(0, moves.size() - 1);
+        auto [id, x, y, rot] = moves[dis(gen)];
+
+        Block blk(getBlock(id));
+        blk.rotate_block(rot);
+
+        board.change_status(turn, blk, id, rot, x, y, *cur);
       }
 
-      if (pass_count >= 2) {
-        // std::cout << "[FAST_SIM] END: consecutive pass\n";
-        break;
-      }
-
-      turn = (turn == Color::PLAYER1) ? Color::PLAYER2 : Color::PLAYER1;
-
-      // どのブロックも置けなければパス
       turn = (turn == Color::PLAYER1) ? Color::PLAYER2 : Color::PLAYER1;
     }
 
-    // --- 評価（超軽量） ---
-    return (p1.score > p2.score) ? 1.0 : (p1.score == p2.score) ? 0.5 : 0.0;
+    // --- スコア差評価 ---
+    double diff = p1.score - p2.score;
+
+    // 正規化 [-1,1]
+    return diff / MAX_SCORE;
   }
 
   // --- Backpropagation ---
@@ -1101,7 +1118,7 @@ std::tuple<std::string, int, int, int> MCTS(Board root_board, Player root_p1,
 
     MCTSNode *node = root;
     // 1. Selection
-    // cout << "[MCTS] Iteration " << iter + 1 << "/" << iterations << "\n";
+    cout << "[MCTS] Iteration " << iter + 1 << "/" << iterations << "\n";
     while (node->depth < MAX_TREE_DEPTH && node->untried_moves.empty() &&
            !node->children.empty()) {
       node = node->select_child();
@@ -1142,6 +1159,11 @@ std::tuple<std::string, int, int, int> MCTS(Board root_board, Player root_p1,
     return {"", -1, -1, 0};
   }
 
+  std::string best_block_id = best_child->move_block_id;
+  int best_x = best_child->move_x;
+  int best_y = best_child->move_y;
+  int best_rot = best_child->move_rot;
+
   cout << "[MCTS] Best move: " << best_child->move_block_id << " ("
        << best_child->move_x << "," << best_child->move_y
        << ") rot=" << best_child->move_rot << "\n";
@@ -1152,8 +1174,7 @@ std::tuple<std::string, int, int, int> MCTS(Board root_board, Player root_p1,
   delete_subtree(root);
   cout << "deleted subtree." << endl;
 
-  return {best_child->move_block_id, best_child->move_x, best_child->move_y,
-          best_child->move_rot};
+  return {best_block_id, best_x, best_y, best_rot};
 }
 
 int main() {
