@@ -352,6 +352,8 @@ constexpr int TILE_NUMBER = 14;
 constexpr int COLOR_NUM = 2;
 constexpr int BOARD_SIZE = TILE_NUMBER + 2; // 壁を含めたサイズ
 
+constexpr double MAX_SCORE = 89.0;
+
 enum TileState {
   BLANK = 0,
   CANTSET = 1,
@@ -1032,10 +1034,6 @@ struct MCTSNode {
 
       if (moves.empty()) {
         pass_count++;
-        cout << "[FAST_SIM] PASS: "
-             << ((turn == Color::PLAYER1) ? "PLAYER1" : "PLAYER2")
-             << " step=" << step << endl;
-
         if (pass_count >= 2)
           break;
       } else {
@@ -1053,11 +1051,11 @@ struct MCTSNode {
       turn = (turn == Color::PLAYER1) ? Color::PLAYER2 : Color::PLAYER1;
     }
 
-    if (p1.score > p2.score)
-      return 1.0;
-    if (p1.score < p2.score)
-      return 0.0;
-    return 0.5;
+    // --- スコア差評価 ---
+    double diff = p1.score - p2.score;
+
+    // 正規化 [-1,1]
+    return diff / MAX_SCORE;
   }
 
   // --- Backpropagation ---
