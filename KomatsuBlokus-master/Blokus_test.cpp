@@ -355,7 +355,7 @@ constexpr int BOARD_SIZE = TILE_NUMBER + 2; // 壁を含めたサイズ
 
 constexpr double MAX_SCORE = 89.0;
 
-enum class AIType { RANDOM, MCTS };
+enum class AIType { RANDOM, MCTS_WIN, MCTS_EVAL };
 
 enum class GameResult { P1_WIN, P2_WIN, DRAW };
 
@@ -912,7 +912,15 @@ int mobility(Board &board, Color c, Player &p) {
   return get_fast_legal_moves(board, c, p, 50).size();
 }
 
-double evaluate(Board &board, Player &p1, Player &p2) {
+double evaluate(Board &board, Player &p1, Player &p2, AIType ai_type) {
+
+  if (ai_type == AIType::MCTS_WIN) {
+    double result =
+        (p1.score > p2.score) ? 1.0 : (p1.score == p2.score ? 0.5 : 0.0);
+
+    return result;
+  }
+
   int cant_p1 = 0, able_p1 = 0;
   int cant_p2 = 0, able_p2 = 0;
 
@@ -1105,7 +1113,8 @@ struct MCTSNode {
     return diff / MAX_SCORE;
   }
 
-  double heuristic_playout(Board board, Player p1, Player p2, Color turn) {
+  double heuristic_playout(Board board, Player p1, Player p2, Color turn,
+                           AIType ai_type) {
     for (int depth = 0; depth < PLAYOUT_DEPTH; depth++) {
 
       Player *cur = (turn == Color::PLAYER1) ? &p1 : &p2;
@@ -1123,7 +1132,7 @@ struct MCTSNode {
       turn = (turn == Color::PLAYER1) ? Color::PLAYER2 : Color::PLAYER1;
     }
 
-    return evaluate(board, p1, p2);
+    return evaluate(board, p1, p2, ai_type);
   }
 
   // --- Backpropagation ---
@@ -1153,8 +1162,8 @@ void delete_subtree(MCTSNode *node) {
 // ============================
 std::tuple<std::string, int, int, int> MCTS(Board root_board, Player root_p1,
                                             Player root_p2, Color root_turn,
-                                            int iterations,
-                                            int MAX_TREE_DEPTH) {
+                                            int iterations, int MAX_TREE_DEPTH,
+                                            AIType ai_type) {
   // --- ルートノード作成 ---
   MCTSNode *root = new MCTSNode(root_board, root_p1, root_p2, root_turn);
 
@@ -1199,8 +1208,9 @@ std::tuple<std::string, int, int, int> MCTS(Board root_board, Player root_p1,
 
     // cout << "[MCTS] Simulation phase.\n";
     // 3. Simulation
-    double result = node->heuristic_playout(
-        node->board, node->player1, node->player2, node->current_player);
+    double result =
+        node->heuristic_playout(node->board, node->player1, node->player2,
+                                node->current_player, ai_type);
 
     // cout << "[MCTS] Backpropagation phase.\n";
     // 4. Backpropagation
@@ -1213,7 +1223,7 @@ std::tuple<std::string, int, int, int> MCTS(Board root_board, Player root_p1,
   MCTSNode *best_child = nullptr;
   int best_visit = -1;
 
-  cout << "[MCTS] Selecting best move from root children.\n";
+  // cout << "[MCTS] Selecting best move from root children.\n";
   for (auto child : root->children) {
     if (child->visit_count > best_visit) {
       best_visit = child->visit_count;
@@ -1268,10 +1278,15 @@ GameResult play_game(Board board, Player p1, Player p2, Color start_turn,
       std::string block_id;
       int x, y, rot;
 
-      if (ai_type == AIType::MCTS) {
+      if (ai_type == AIType::MCTS_EVAL) {
 
         std::tie(block_id, x, y, rot) =
-            MCTS(board, p1, p2, turn, mcts_iterations, max_tree_depth);
+            MCTS(board, p1, p2, turn, mcts_iterations, max_tree_depth, ai_type);
+
+      } else if (ai_type == AIType::MCTS_WIN) {
+
+        std::tie(block_id, x, y, rot) =
+            MCTS(board, p1, p2, turn, mcts_iterations, max_tree_depth, ai_type);
 
       } else { // RANDOM
 
@@ -1314,15 +1329,15 @@ int main() {
       {{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
        {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
        {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-       {1, 0, 0, 0, 2, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-       {1, 0, 0, 2, 1, 3, 1, 2, 0, 0, 0, 0, 0, 0, 0, 1},
-       {1, 0, 0, 1, 3, 3, 3, 1, 0, 0, 0, 0, 0, 0, 0, 1},
-       {1, 0, 0, 2, 1, 3, 1, 2, 0, 0, 0, 0, 0, 0, 0, 1},
-       {1, 0, 0, 0, 2, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 1},
        {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-       {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 1},
-       {1, 0, 0, 0, 0, 0, 0, 0, 0, 4, 4, 4, 0, 0, 0, 1},
-       {1, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 1},
+       {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+       {1, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+       {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+       {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+       {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+       {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+       {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+       {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
        {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
        {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
        {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
@@ -1332,30 +1347,30 @@ int main() {
        {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
        {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
        {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-       {1, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-       {1, 0, 0, 0, 4, 4, 4, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-       {1, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
        {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-       {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 1, 2, 0, 0, 1},
-       {1, 0, 0, 0, 0, 0, 0, 0, 2, 1, 1, 3, 1, 0, 0, 1},
-       {1, 0, 0, 0, 0, 0, 0, 0, 1, 3, 3, 3, 1, 0, 0, 1},
-       {1, 0, 0, 0, 0, 0, 0, 0, 1, 3, 1, 1, 2, 0, 0, 1},
-       {1, 0, 0, 0, 0, 0, 0, 0, 2, 1, 2, 0, 0, 0, 0, 1},
+       {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+       {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+       {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+       {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+       {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+       {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 1},
+       {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+       {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
        {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
        {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
        {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}}};
 
   int win = 0;
-  int N = 25;
+  int N = 50;
 
   for (int i = 0; i < N; i++) {
 
     Board board(TILE_NUMBER, input_board);
-    Player p1{Color::PLAYER1, {"u"}};
-    Player p2{Color::PLAYER2, {"s"}};
+    Player p1{Color::PLAYER1, {}};
+    Player p2{Color::PLAYER2, {}};
 
-    auto result = play_game(board, p1, p2, Color::PLAYER1, AIType::MCTS,
-                            AIType::RANDOM, iterations, MAX_TREE_DEPTH);
+    auto result = play_game(board, p1, p2, Color::PLAYER1, AIType::MCTS_EVAL,
+                            AIType::MCTS_WIN, iterations, MAX_TREE_DEPTH);
 
     if (result == GameResult::P1_WIN)
       win++;
