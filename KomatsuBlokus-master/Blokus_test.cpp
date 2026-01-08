@@ -1318,7 +1318,7 @@ GameResult play_game(Board board, Player p1, Player p2, Color start_turn,
 int main() {
   const int TILE_NUMBER = 14;
   const int MAX_TREE_DEPTH = 7;
-  int iterations = 300; // 試行回数
+  int iterations = 1000; // 試行回数
 
   init_block_ids_by_size();
 
@@ -1361,7 +1361,7 @@ int main() {
        {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}}};
 
   int win = 0;
-  int N = 50;
+  int N = 100;
 
   for (int i = 0; i < N; i++) {
 
