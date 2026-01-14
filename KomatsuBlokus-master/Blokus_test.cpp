@@ -964,6 +964,7 @@ struct MCTSNode {
   Player player1;
   Player player2;
   Color current_player;
+  double eval_value = 0.0;
 
   MCTSNode *parent;
   std::vector<MCTSNode *> children;
@@ -1141,12 +1142,56 @@ struct MCTSNode {
     double r = result;
     while (node != nullptr) {
       node->visit_count++;
-      node->win_score -= r;
+      node->win_score += r;
       r = -r; // 手番が変わるごとに反転
       node = node->parent;
     }
   }
 };
+
+void print_tree_2level(MCTSNode *root, int top_children = 3,
+                       int top_grandchildren = 3) {
+
+  // --- ルート直下 ---
+  std::vector<MCTSNode *> children = root->children;
+  std::sort(children.begin(), children.end(), [](MCTSNode *a, MCTSNode *b) {
+    return a->visit_count > b->visit_count;
+  });
+
+  std::cout << "===== MCTS Tree (2 levels) =====\n";
+
+  int c_limit = std::min((int)children.size(), top_children);
+
+  for (int i = 0; i < c_limit; i++) {
+    MCTSNode *c = children[i];
+    double Qc = (c->visit_count > 0) ? c->win_score / c->visit_count : 0.0;
+
+    std::cout << "[Root -> " << i << "] "
+              << "move=" << c->move_block_id << " (" << c->move_x << ","
+              << c->move_y << ") rot=" << c->move_rot
+              << " | N=" << c->visit_count << " | Q=" << Qc
+              << " | eval=" << c->eval_value << "\n";
+
+    // --- 孫ノード ---
+    std::vector<MCTSNode *> gchildren = c->children;
+    std::sort(gchildren.begin(), gchildren.end(), [](MCTSNode *a, MCTSNode *b) {
+      return a->visit_count > b->visit_count;
+    });
+
+    int g_limit = std::min((int)gchildren.size(), top_grandchildren);
+
+    for (int j = 0; j < g_limit; j++) {
+      MCTSNode *g = gchildren[j];
+      double Qg = (g->visit_count > 0) ? g->win_score / g->visit_count : 0.0;
+
+      std::cout << "     -> [" << j << "] "
+                << "move=" << g->move_block_id << " (" << g->move_x << ","
+                << g->move_y << ") rot=" << g->move_rot
+                << " | N=" << g->visit_count << " | Q=" << Qg
+                << " | eval=" << g->eval_value << "\n";
+    }
+  }
+}
 
 void delete_subtree(MCTSNode *node) {
   if (!node)
@@ -1212,10 +1257,14 @@ std::tuple<std::string, int, int, int> MCTS(Board root_board, Player root_p1,
         node->heuristic_playout(node->board, node->player1, node->player2,
                                 node->current_player, ai_type);
 
+    node->eval_value = result;
+
     // cout << "[MCTS] Backpropagation phase.\n";
     // 4. Backpropagation
     node->backpropagate(result);
   }
+
+  print_tree_2level(root, 3, 3);
 
   // ============================
   // 最良手を選択
@@ -1288,7 +1337,7 @@ GameResult play_game(Board board, Player p1, Player p2, Color start_turn,
         std::tie(block_id, x, y, rot) =
             MCTS(board, p1, p2, turn, mcts_iterations, max_tree_depth, ai_type);
 
-      } else { // RANDOM
+      } else if (ai_type == AIType::RANDOM) {
 
         std::uniform_int_distribution<> dis(0, legal.size() - 1);
         std::tie(block_id, x, y, rot) = legal[dis(gen)];
@@ -1318,7 +1367,7 @@ GameResult play_game(Board board, Player p1, Player p2, Color start_turn,
 int main() {
   const int TILE_NUMBER = 14;
   const int MAX_TREE_DEPTH = 7;
-  int iterations = 1000; // 試行回数
+  int iterations = 10000; // 試行回数
 
   init_block_ids_by_size();
 
@@ -1360,8 +1409,9 @@ int main() {
        {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
        {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}}};
 
-  int win = 0;
-  int N = 100;
+  int win_p1 = 0;
+  int win_p2 = 0;
+  int N = 1;
 
   for (int i = 0; i < N; i++) {
 
@@ -1369,14 +1419,20 @@ int main() {
     Player p1{Color::PLAYER1, {}};
     Player p2{Color::PLAYER2, {}};
 
-    auto result = play_game(board, p1, p2, Color::PLAYER1, AIType::MCTS_EVAL,
-                            AIType::MCTS_WIN, iterations, MAX_TREE_DEPTH);
+    auto [block_id, x, y, rot] = MCTS(board, p1, p2, Color::PLAYER1, iterations,
+                                      MAX_TREE_DEPTH, AIType::MCTS_EVAL);
+
+    /*auto result = play_game(board, p1, p2, Color::PLAYER1, AIType::MCTS_EVAL,
+                            AIType::RANDOM, iterations, MAX_TREE_DEPTH);
 
     if (result == GameResult::P1_WIN)
-      win++;
+      win_p1++;
+    if (result == GameResult::P2_WIN)
+      win_p2++; */
   }
 
-  cout << "P1 win rate = " << (double)win / N << endl;
+  // cout << "P1 win rate = " << (double)win_p1 / N << endl;
+  // cout << "P2 win rate = " << (double)win_p2 / N << endl;
 
   return 0;
 }
