@@ -348,7 +348,7 @@ const std::unordered_map<std::string, BlockData> block_table = {
 
 };
 
-const int PLAYOUT_DEPTH = 8;
+const int PLAYOUT_DEPTH = 5;
 constexpr int TILE_NUMBER = 14;
 constexpr int COLOR_NUM = 2;
 constexpr int BOARD_SIZE = TILE_NUMBER + 2; // 壁を含めたサイズ
@@ -912,51 +912,39 @@ int mobility(Board &board, Color c, Player &p) {
   return get_fast_legal_moves(board, c, p, 50).size();
 }
 
-double evaluate(Board &board, Player &p1, Player &p2, AIType ai_type) {
-
-  if (ai_type == AIType::MCTS_WIN) {
-    double result =
-        (p1.score > p2.score) ? 1.0 : (p1.score == p2.score ? 0.5 : 0.0);
-
-    return result;
-  }
-
-  int cant_p1 = 0, able_p1 = 0;
-  int cant_p2 = 0, able_p2 = 0;
+double evaluate(Board &board, Player &p1, Player &p2) {
+  double eval = 0.0;
+  int blank = 0;
+  int able_p1 = 0;
+  int able_p2 = 0;
 
   int c = static_cast<int>(Color::PLAYER1);
   int opc = static_cast<int>(Color::PLAYER2);
 
   for (int y = 1; y <= board.TILE_NUMBER; y++) {
     for (int x = 1; x <= board.TILE_NUMBER; x++) {
-
-      if (board.status[c][y][x] == Board::CANTSET)
-        cant_p1++;
       if (board.status[c][y][x] == Board::ABLESET)
         able_p1++;
-
-      if (board.status[opc][y][x] == Board::CANTSET)
-        cant_p2++;
+      if (board.status[c][y][x] == Board::BLANK)
+        blank++;
       if (board.status[opc][y][x] == Board::ABLESET)
         able_p2++;
     }
   }
 
   // --- 正規化 ---
-  double score_norm = (p1.score - p2.score) / 89.0;
+  double score_norm = (p1.score) / 89.0;
   double able_norm = (able_p1 - able_p2) / 196.0;
-  double cant_norm = (cant_p1 - cant_p2) / 196.0;
   double mobility_norm = (mobility(board, Color::PLAYER1, p1) -
                           mobility(board, Color::PLAYER2, p2)) /
                          50.0;
   // --- 重み ---
-  const double w_score = 1.0;
-  const double w_able = 0.4;
-  const double w_cant = 0.1;
-  const double w_mobility = 0.5;
+  const double w_score = 0.7;
+  const double w_mobility = 0.3;
 
-  return w_score * score_norm + w_able * able_norm - w_cant * cant_norm +
-         w_mobility * mobility_norm;
+  eval = w_score * score_norm;
+
+  return eval;
 }
 
 struct MCTSNode {
@@ -1114,8 +1102,7 @@ struct MCTSNode {
     return diff / MAX_SCORE;
   }
 
-  double heuristic_playout(Board board, Player p1, Player p2, Color turn,
-                           AIType ai_type) {
+  double heuristic_playout(Board board, Player p1, Player p2, Color turn) {
     for (int depth = 0; depth < PLAYOUT_DEPTH; depth++) {
 
       Player *cur = (turn == Color::PLAYER1) ? &p1 : &p2;
@@ -1133,7 +1120,7 @@ struct MCTSNode {
       turn = (turn == Color::PLAYER1) ? Color::PLAYER2 : Color::PLAYER1;
     }
 
-    return evaluate(board, p1, p2, ai_type);
+    return evaluate(board, p1, p2);
   }
 
   // --- Backpropagation ---
@@ -1148,6 +1135,36 @@ struct MCTSNode {
     }
   }
 };
+
+void print_tree_recursive(MCTSNode *node, int depth, int max_depth, int top_k,
+                          const std::string &prefix = "") {
+  if (!node || depth > max_depth)
+    return;
+
+  // 子ノードを訪問回数順にソート
+  std::vector<MCTSNode *> children = node->children;
+  std::sort(children.begin(), children.end(), [](MCTSNode *a, MCTSNode *b) {
+    return a->visit_count > b->visit_count;
+  });
+
+  int limit = std::min((int)children.size(), top_k);
+
+  for (int i = 0; i < limit; i++) {
+    MCTSNode *c = children[i];
+
+    double Q = (c->visit_count > 0) ? c->win_score / c->visit_count : 0.0;
+
+    std::cout << prefix << "[D" << depth << " -> " << i << "] "
+              << "move=" << c->move_block_id << " (" << c->move_x << ","
+              << c->move_y << ")"
+              << " rot=" << c->move_rot << " | N=" << c->visit_count
+              << " | W=" << c->win_score << " | Q=" << Q
+              << " | eval=" << c->eval_value << "\n";
+
+    // 再帰（次の深さへ）
+    print_tree_recursive(c, depth + 1, max_depth, top_k, prefix + "     ");
+  }
+}
 
 void print_tree_2level(MCTSNode *root, int top_children = 3,
                        int top_grandchildren = 3) {
@@ -1168,8 +1185,9 @@ void print_tree_2level(MCTSNode *root, int top_children = 3,
 
     std::cout << "[Root -> " << i << "] "
               << "move=" << c->move_block_id << " (" << c->move_x << ","
-              << c->move_y << ") rot=" << c->move_rot
-              << " | N=" << c->visit_count << " | Q=" << Qc
+              << c->move_y << ")"
+              << " rot=" << c->move_rot << " | N=" << c->visit_count
+              << " | W=" << c->win_score << " | Q=" << Qc
               << " | eval=" << c->eval_value << "\n";
 
     // --- 孫ノード ---
@@ -1186,8 +1204,9 @@ void print_tree_2level(MCTSNode *root, int top_children = 3,
 
       std::cout << "     -> [" << j << "] "
                 << "move=" << g->move_block_id << " (" << g->move_x << ","
-                << g->move_y << ") rot=" << g->move_rot
-                << " | N=" << g->visit_count << " | Q=" << Qg
+                << g->move_y << ")"
+                << " rot=" << g->move_rot << " | N=" << g->visit_count
+                << " | W=" << g->win_score << " | Q=" << Qg
                 << " | eval=" << g->eval_value << "\n";
     }
   }
@@ -1229,6 +1248,11 @@ std::tuple<std::string, int, int, int> MCTS(Board root_board, Player root_p1,
     root->expand_node();
   }
 
+  if (root->untried_moves.size() > 300) {
+    iterations = root->untried_moves.size() * 5;
+    cout << "Untried moves: " << root->untried_moves.size() << "\n";
+  }
+
   std::random_device rd;
   std::mt19937 gen(rd());
 
@@ -1251,11 +1275,19 @@ std::tuple<std::string, int, int, int> MCTS(Board root_board, Player root_p1,
       node = node->expand_node();
     }
 
+    double result = 0.0;
+
     // cout << "[MCTS] Simulation phase.\n";
     // 3. Simulation
-    double result =
-        node->heuristic_playout(node->board, node->player1, node->player2,
-                                node->current_player, ai_type);
+    if (ai_type == AIType::MCTS_EVAL) {
+      result = node->heuristic_playout(node->board, node->player1,
+                                       node->player2, node->current_player);
+    }
+
+    if (ai_type == AIType::MCTS_WIN) {
+      result = node->fast_simulation(node->board, node->player1, node->player2,
+                                     node->current_player, 40);
+    }
 
     node->eval_value = result;
 
@@ -1264,7 +1296,11 @@ std::tuple<std::string, int, int, int> MCTS(Board root_board, Player root_p1,
     node->backpropagate(result);
   }
 
-  print_tree_2level(root, 3, 3);
+  print_tree_recursive(root,
+                       1, // depth（Root直下を1とする）
+                       5, // 最大深さ
+                       1  // 各階層で上位1ノードのみ表示
+  );
 
   // ============================
   // 最良手を選択
@@ -1367,7 +1403,7 @@ GameResult play_game(Board board, Player p1, Player p2, Color start_turn,
 int main() {
   const int TILE_NUMBER = 14;
   const int MAX_TREE_DEPTH = 7;
-  int iterations = 10000; // 試行回数
+  int iterations = 300; // 試行回数
 
   init_block_ids_by_size();
 
@@ -1378,15 +1414,15 @@ int main() {
       {{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
        {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
        {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+       {1, 0, 0, 0, 2, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+       {1, 0, 0, 2, 1, 3, 1, 2, 0, 0, 0, 0, 0, 0, 0, 1},
+       {1, 0, 0, 1, 3, 3, 3, 1, 0, 0, 0, 0, 0, 0, 0, 1},
+       {1, 0, 0, 2, 1, 3, 1, 2, 0, 0, 0, 0, 0, 0, 0, 1},
+       {1, 0, 0, 0, 2, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 1},
        {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-       {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-       {1, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-       {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-       {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-       {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-       {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-       {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-       {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+       {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 1},
+       {1, 0, 0, 0, 0, 0, 0, 0, 0, 4, 4, 4, 0, 0, 0, 1},
+       {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 1},
        {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
        {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
        {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
@@ -1396,43 +1432,67 @@ int main() {
        {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
        {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
        {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+       {1, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+       {1, 0, 0, 0, 4, 4, 4, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+       {1, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
        {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-       {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-       {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-       {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-       {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-       {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-       {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 1},
-       {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-       {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+       {1, 0, 0, 0, 0, 0, 0, 0, 0, 2, 1, 2, 0, 0, 0, 1},
+       {1, 0, 0, 0, 0, 0, 0, 0, 2, 1, 3, 1, 2, 0, 0, 1},
+       {1, 0, 0, 0, 0, 0, 0, 0, 1, 3, 3, 3, 1, 0, 0, 1},
+       {1, 0, 0, 0, 0, 0, 0, 0, 2, 1, 3, 1, 2, 0, 0, 1},
+       {1, 0, 0, 0, 0, 0, 0, 0, 0, 2, 1, 2, 0, 0, 0, 1},
        {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
        {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
        {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}}};
 
-  int win_p1 = 0;
-  int win_p2 = 0;
-  int N = 1;
+  int win_eval = 0;
+  int win_win = 0;
+  int win_rand = 0;
+  int N = 50;
 
   for (int i = 0; i < N; i++) {
 
     Board board(TILE_NUMBER, input_board);
-    Player p1{Color::PLAYER1, {}};
-    Player p2{Color::PLAYER2, {}};
+    Player p1{Color::PLAYER1, {"u"}};
+    Player p2{Color::PLAYER2, {"u"}};
+
+    /*cout << "legal moves: "
+         << get_all_legal_moves(board, Color::PLAYER1, p1).size() << endl;
 
     auto [block_id, x, y, rot] = MCTS(board, p1, p2, Color::PLAYER1, iterations,
-                                      MAX_TREE_DEPTH, AIType::MCTS_EVAL);
+                                      MAX_TREE_DEPTH, AIType::MCTS_EVAL);*/
 
-    /*auto result = play_game(board, p1, p2, Color::PLAYER1, AIType::MCTS_EVAL,
+    auto result = play_game(board, p1, p2, Color::PLAYER1, AIType::MCTS_EVAL,
                             AIType::RANDOM, iterations, MAX_TREE_DEPTH);
 
     if (result == GameResult::P1_WIN)
-      win_p1++;
+      win_eval++;
     if (result == GameResult::P2_WIN)
-      win_p2++; */
+      win_rand++;
   }
 
-  // cout << "P1 win rate = " << (double)win_p1 / N << endl;
-  // cout << "P2 win rate = " << (double)win_p2 / N << endl;
+  for (int i = 0; i < N; i++) {
 
+    Board board(TILE_NUMBER, input_board);
+    Player p1{Color::PLAYER1, {"u"}};
+    Player p2{Color::PLAYER2, {"u"}};
+
+    /*cout << "legal moves: "
+         << get_all_legal_moves(board, Color::PLAYER1, p1).size() << endl;
+
+    auto [block_id, x, y, rot] = MCTS(board, p1, p2, Color::PLAYER1, iterations,
+                                      MAX_TREE_DEPTH, AIType::MCTS_EVAL);*/
+
+    auto result = play_game(board, p1, p2, Color::PLAYER1, AIType::RANDOM,
+                            AIType::MCTS_EVAL, iterations, MAX_TREE_DEPTH);
+
+    if (result == GameResult::P1_WIN)
+      win_rand++;
+    if (result == GameResult::P2_WIN)
+      win_eval++;
+  }
+
+  cout << "(EVAL) win rate = " << (double)win_eval / (N * 2) << endl;
+  cout << "(RAND) win rate = " << (double)win_rand / (N * 2) << endl;
   return 0;
 }
