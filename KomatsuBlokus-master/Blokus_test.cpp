@@ -348,7 +348,6 @@ const std::unordered_map<std::string, BlockData> block_table = {
 
 };
 
-const int PLAYOUT_DEPTH = 5;
 constexpr int TILE_NUMBER = 14;
 constexpr int COLOR_NUM = 2;
 constexpr int BOARD_SIZE = TILE_NUMBER + 2; // 壁を含めたサイズ
@@ -358,6 +357,12 @@ constexpr double MAX_SCORE = 89.0;
 enum class AIType { RANDOM, MCTS_WIN, MCTS_EVAL };
 
 enum class GameResult { P1_WIN, P2_WIN, DRAW };
+
+enum class GamePhase {
+  OPENING, // 序盤
+  MIDDLE,  // 中盤
+  ENDING   // 終盤
+};
 
 enum TileState {
   BLANK = 0,
@@ -718,6 +723,17 @@ public:
       cout << endl;
     }
   }
+  GamePhase get_phase(const Player &p1, const Player &p2) const {
+    int total_score = p1.score + p2.score;
+
+    if (total_score <= 29) {
+      return GamePhase::OPENING;
+    } else if (total_score <= 55) {
+      return GamePhase::MIDDLE;
+    } else {
+      return GamePhase::ENDING;
+    }
+  }
 };
 
 // Player クラスを引数に取って合法手リストを返す関数
@@ -771,11 +787,10 @@ vector<tuple<string, int, int, int>> get_fast_legal_moves(Board &board,
     }
   }
 
-  // 大きいブロック優先
-  sort(unused_blocks.begin(), unused_blocks.end(),
-       [&](const string &a, const string &b) {
-         return getBlock(a).score > getBlock(b).score;
-       });
+  static thread_local mt19937 gen(random_device{}());
+
+  // ★ ランダム化
+  shuffle(unused_blocks.begin(), unused_blocks.end(), gen);
 
   for (auto &block_id : unused_blocks) {
     Block base(getBlock(block_id));
@@ -786,6 +801,16 @@ vector<tuple<string, int, int, int>> get_fast_legal_moves(Board &board,
 
       auto positions =
           board.search_settable_position_near_ableset(color, tmp.shape);
+
+      // 大きさでソート
+      sort(unused_blocks.begin(), unused_blocks.end(),
+           [&](const string &a, const string &b) {
+             return getBlock(a).score > getBlock(b).score;
+           });
+
+      // 上位K個だけランダム
+      int K = min(5, (int)unused_blocks.size());
+      shuffle(unused_blocks.begin(), unused_blocks.begin() + K, gen);
 
       for (auto &[x, y] : positions) {
         moves.emplace_back(block_id, x, y, rot);
@@ -912,39 +937,64 @@ int mobility(Board &board, Color c, Player &p) {
   return get_fast_legal_moves(board, c, p, 50).size();
 }
 
-double evaluate(Board &board, Player &p1, Player &p2) {
-  double eval = 0.0;
-  int blank = 0;
-  int able_p1 = 0;
-  int able_p2 = 0;
+double evaluate(Board &board, Player &p1, Player &p2, Color turn,
+                GamePhase phase) {
+  double r = 0.0;
+  int cant = 0;
+  double w_score;
+  double w_mymob;
+  double w_opmob;
+  double w_cant;
 
-  int c = static_cast<int>(Color::PLAYER1);
-  int opc = static_cast<int>(Color::PLAYER2);
-
-  for (int y = 1; y <= board.TILE_NUMBER; y++) {
-    for (int x = 1; x <= board.TILE_NUMBER; x++) {
-      if (board.status[c][y][x] == Board::ABLESET)
-        able_p1++;
-      if (board.status[c][y][x] == Board::BLANK)
-        blank++;
-      if (board.status[opc][y][x] == Board::ABLESET)
-        able_p2++;
-    }
+  switch (phase) {
+  case GamePhase::OPENING:
+    w_score = 0.6;
+    w_mymob = 0.2;
+    w_opmob = 0.2;
+    w_cant = 0;
+    break;
+  case GamePhase::MIDDLE:
+    w_score = 0.7;
+    w_mymob = 0.15;
+    w_opmob = 0.1;
+    w_cant = 0.05;
+    break;
+  case GamePhase::ENDING:
+    w_score = 0.8;
+    w_mymob = 0.0;
+    w_opmob = 0.0;
+    w_cant = 0.2;
+    break;
   }
 
-  // --- 正規化 ---
-  double score_norm = (p1.score) / 89.0;
-  double able_norm = (able_p1 - able_p2) / 196.0;
-  double mobility_norm = (mobility(board, Color::PLAYER1, p1) -
-                          mobility(board, Color::PLAYER2, p2)) /
-                         50.0;
-  // --- 重み ---
-  const double w_score = 0.7;
-  const double w_mobility = 0.3;
-
-  eval = w_score * score_norm;
-
-  return eval;
+  if (turn == Color::PLAYER1) {
+    int col = static_cast<int>(turn);
+    for (int y = 0; y < TILE_NUMBER + 2; y++) {
+      for (int x = 0; x < TILE_NUMBER + 2; x++) {
+        int cell = board.status[col][y][x];
+        if (cell == CANTSET)
+          cant++;
+      }
+    }
+    int mymob = mobility(board, Color::PLAYER1, p1);
+    int opmob = mobility(board, Color::PLAYER2, p2);
+    r = w_score * p1.score - w_cant * cant / 194 + w_mymob * mymob -
+        w_opmob * opmob;
+  } else {
+    int col = static_cast<int>(Color::PLAYER2);
+    for (int y = 0; y < TILE_NUMBER + 2; y++) {
+      for (int x = 0; x < TILE_NUMBER + 2; x++) {
+        int cell = board.status[col][y][x];
+        if (cell == CANTSET)
+          cant++;
+      }
+    }
+    int mymob = mobility(board, Color::PLAYER2, p2);
+    int opmob = mobility(board, Color::PLAYER1, p1);
+    r = w_score * p2.score - w_cant * cant / 194 + w_mymob * mymob -
+        w_opmob * opmob;
+  }
+  return r;
 }
 
 struct MCTSNode {
@@ -1103,6 +1153,21 @@ struct MCTSNode {
   }
 
   double heuristic_playout(Board board, Player p1, Player p2, Color turn) {
+    int PLAYOUT_DEPTH;
+    auto phase = board.get_phase(p1, p2);
+
+    switch (phase) {
+    case GamePhase::OPENING:
+      PLAYOUT_DEPTH == 3;
+      break;
+    case GamePhase::MIDDLE:
+      PLAYOUT_DEPTH == 5;
+      break;
+    case GamePhase::ENDING:
+      PLAYOUT_DEPTH == 30;
+      break;
+    }
+
     for (int depth = 0; depth < PLAYOUT_DEPTH; depth++) {
 
       Player *cur = (turn == Color::PLAYER1) ? &p1 : &p2;
@@ -1120,7 +1185,7 @@ struct MCTSNode {
       turn = (turn == Color::PLAYER1) ? Color::PLAYER2 : Color::PLAYER1;
     }
 
-    return evaluate(board, p1, p2);
+    return evaluate(board, p1, p2, turn, phase);
   }
 
   // --- Backpropagation ---
@@ -1231,6 +1296,8 @@ std::tuple<std::string, int, int, int> MCTS(Board root_board, Player root_p1,
   // --- ルートノード作成 ---
   MCTSNode *root = new MCTSNode(root_board, root_p1, root_p2, root_turn);
 
+  auto phase = root_board.get_phase(root_p1, root_p2);
+
   // ルートの未展開手のセット
   if (root_turn == Color::PLAYER1)
     root->untried_moves =
@@ -1248,9 +1315,16 @@ std::tuple<std::string, int, int, int> MCTS(Board root_board, Player root_p1,
     root->expand_node();
   }
 
-  if (root->untried_moves.size() > 300) {
-    iterations = root->untried_moves.size() * 5;
-    cout << "Untried moves: " << root->untried_moves.size() << "\n";
+  switch (phase) {
+  case GamePhase::OPENING:
+    iterations = 2500;
+    break;
+  case GamePhase::MIDDLE:
+    iterations = 400;
+    break;
+  case GamePhase::ENDING:
+    iterations = 100;
+    break;
   }
 
   std::random_device rd;
