@@ -723,6 +723,7 @@ public:
       cout << endl;
     }
   }
+
   GamePhase get_phase(const Player &p1, const Player &p2) const {
     int total_score = p1.score + p2.score;
 
@@ -1201,6 +1202,10 @@ struct MCTSNode {
   }
 };
 
+std::string color_to_string(Color c) {
+  return (c == Color::PLAYER1) ? "P1" : "P2";
+}
+
 void print_tree_recursive(MCTSNode *node, int depth, int max_depth, int top_k,
                           const std::string &prefix = "") {
   if (!node || depth > max_depth)
@@ -1220,6 +1225,7 @@ void print_tree_recursive(MCTSNode *node, int depth, int max_depth, int top_k,
     double Q = (c->visit_count > 0) ? c->win_score / c->visit_count : 0.0;
 
     std::cout << prefix << "[D" << depth << " -> " << i << "] "
+              << "turn=" << color_to_string(c->current_player) << " "
               << "move=" << c->move_block_id << " (" << c->move_x << ","
               << c->move_y << ")"
               << " rot=" << c->move_rot << " | N=" << c->visit_count
@@ -1317,15 +1323,18 @@ std::tuple<std::string, int, int, int> MCTS(Board root_board, Player root_p1,
 
   switch (phase) {
   case GamePhase::OPENING:
-    iterations = 2500;
+    iterations = 2000;
     break;
   case GamePhase::MIDDLE:
     iterations = 400;
     break;
   case GamePhase::ENDING:
-    iterations = 100;
+    iterations = 250;
     break;
   }
+
+  std::cout << "[MCTS] Root legal moves = " << root->children.size()
+            << std::endl;
 
   std::random_device rd;
   std::mt19937 gen(rd());
@@ -1468,9 +1477,13 @@ GameResult play_game(Board board, Player p1, Player p2, Color start_turn,
   }
 
   if (p1.score > p2.score)
-    return GameResult::P1_WIN;
+    cout << "P1 is WIN!"
+         << "\n";
+  return GameResult::P1_WIN;
   if (p2.score > p1.score)
-    return GameResult::P2_WIN;
+    cout << "P2 is WIN!"
+         << "\n";
+  return GameResult::P2_WIN;
   return GameResult::DRAW;
 }
 
@@ -1536,11 +1549,11 @@ int main() {
     auto [block_id, x, y, rot] = MCTS(board, p1, p2, Color::PLAYER1, iterations,
                                       MAX_TREE_DEPTH, AIType::MCTS_EVAL);*/
 
-    auto result = play_game(board, p1, p2, Color::PLAYER1, AIType::MCTS_EVAL,
+    auto result = play_game(board, p1, p2, Color::PLAYER1, AIType::MCTS_WIN,
                             AIType::RANDOM, iterations, MAX_TREE_DEPTH);
 
     if (result == GameResult::P1_WIN)
-      win_eval++;
+      win_win++;
     if (result == GameResult::P2_WIN)
       win_rand++;
   }
@@ -1558,12 +1571,12 @@ int main() {
                                       MAX_TREE_DEPTH, AIType::MCTS_EVAL);*/
 
     auto result = play_game(board, p1, p2, Color::PLAYER1, AIType::RANDOM,
-                            AIType::MCTS_EVAL, iterations, MAX_TREE_DEPTH);
+                            AIType::MCTS_WIN, iterations, MAX_TREE_DEPTH);
 
     if (result == GameResult::P1_WIN)
       win_rand++;
     if (result == GameResult::P2_WIN)
-      win_eval++;
+      win_win++;
   }
 
   cout << "(EVAL) win rate = " << (double)win_eval / (N * 2) << endl;
