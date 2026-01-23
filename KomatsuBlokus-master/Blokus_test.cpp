@@ -727,9 +727,9 @@ public:
   GamePhase get_phase(const Player &p1, const Player &p2) const {
     int total_score = p1.score + p2.score;
 
-    if (total_score <= 29) {
+    if (total_score <= 39) {
       return GamePhase::OPENING;
-    } else if (total_score <= 55) {
+    } else if (total_score <= 99) {
       return GamePhase::MIDDLE;
     } else {
       return GamePhase::ENDING;
@@ -949,10 +949,10 @@ double evaluate(Board &board, Player &p1, Player &p2, Color turn,
 
   switch (phase) {
   case GamePhase::OPENING:
-    w_score = 0.6;
-    w_mymob = 0.2;
-    w_opmob = 0.2;
-    w_cant = 0;
+    w_score = 0.0;
+    w_mymob = 0.0;
+    w_opmob = 0.0;
+    w_cant = 1.0;
     break;
   case GamePhase::MIDDLE:
     w_score = 0.7;
@@ -1146,11 +1146,25 @@ struct MCTSNode {
       turn = (turn == Color::PLAYER1) ? Color::PLAYER2 : Color::PLAYER1;
     }
 
-    // --- スコア差評価 ---
-    double diff = p1.score - p2.score;
-
-    // 正規化 [-1,1]
-    return diff / MAX_SCORE;
+    if (start_turn == Color::PLAYER1) {
+      if (p1.score > p2.score)
+        cout << "P1(WIN) wins\n";
+      return 1.0;
+      if (p1.score < p2.score) {
+        cout << "P2 wins\n";
+        return 0.0;
+      }
+      return 0.5; // 引き分け
+    } else {
+      if (p2.score > p1.score)
+        cout << "P2 wins\n";
+      return 1.0;
+      if (p2.score < p1.score) {
+        cout << "P1(WIN) wins\n";
+        return 0.0;
+      }
+      return 0.5; // 引き分け
+    }
   }
 
   double heuristic_playout(Board board, Player p1, Player p2, Color turn) {
@@ -1159,10 +1173,10 @@ struct MCTSNode {
 
     switch (phase) {
     case GamePhase::OPENING:
-      PLAYOUT_DEPTH == 3;
+      PLAYOUT_DEPTH == 5;
       break;
     case GamePhase::MIDDLE:
-      PLAYOUT_DEPTH == 5;
+      PLAYOUT_DEPTH == 7;
       break;
     case GamePhase::ENDING:
       PLAYOUT_DEPTH == 30;
@@ -1323,13 +1337,13 @@ std::tuple<std::string, int, int, int> MCTS(Board root_board, Player root_p1,
 
   switch (phase) {
   case GamePhase::OPENING:
-    iterations = 2000;
+    iterations = 5000;
     break;
   case GamePhase::MIDDLE:
-    iterations = 400;
+    iterations = 2000;
     break;
   case GamePhase::ENDING:
-    iterations = 250;
+    iterations = 1000;
     break;
   }
 
@@ -1469,6 +1483,10 @@ GameResult play_game(Board board, Player p1, Player p2, Color start_turn,
           cout << "PLAYER1 placed block " << block_id << " at (" << x << ","
                << y << ") with rotation " << rot << "\n";
           board.print_status(turn);
+        } else {
+          cout << "PLAYER2 placed block " << block_id << " at (" << x << ","
+               << y << ") with rotation " << rot << "\n";
+          board.print_status(turn);
         }
       }
     }
@@ -1489,7 +1507,7 @@ GameResult play_game(Board board, Player p1, Player p2, Color start_turn,
 
 int main() {
   const int TILE_NUMBER = 14;
-  const int MAX_TREE_DEPTH = 7;
+  const int MAX_TREE_DEPTH = 10;
   int iterations = 300; // 試行回数
 
   init_block_ids_by_size();
@@ -1579,7 +1597,7 @@ int main() {
       win_win++;
   }
 
-  cout << "(EVAL) win rate = " << (double)win_eval / (N * 2) << endl;
+  cout << "(WIN) win rate = " << (double)win_win / (N * 2) << endl;
   cout << "(RAND) win rate = " << (double)win_rand / (N * 2) << endl;
   return 0;
 }
