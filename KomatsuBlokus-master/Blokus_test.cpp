@@ -901,11 +901,21 @@ pair<int, int> random_playout(Board board, Player player1,
     Player *current_player =
         (current_color == Color::PLAYER1) ? &player1 : &player2;
 
-    // 現在プレイヤーの合法手を取得（コピーされた board/player を使う）
     auto legal_moves =
         get_all_legal_moves(board, current_color, *current_player);
 
-    if (!legal_moves.empty()) {
+    if (legal_moves.empty()) {
+      if (get_all_legal_moves(board, Color::PLAYER2, player2).empty()) {
+        // board.print_status(Color::PLAYER1);  /*  デバッグ用  */
+        break;
+      } else {
+        // パス
+        // 次のプレイヤーに交代
+        current_color =
+            (current_color == Color::PLAYER1) ? Color::PLAYER2 : Color::PLAYER1;
+        continue;
+      }
+    } else {
       // ランダムに1手選択
       std::uniform_int_distribution<> dis(0, (int)legal_moves.size() - 1);
       int idx = dis(gen);
@@ -922,12 +932,6 @@ pair<int, int> random_playout(Board board, Player player1,
     // 次のプレイヤーに交代
     current_color =
         (current_color == Color::PLAYER1) ? Color::PLAYER2 : Color::PLAYER1;
-
-    // 両プレイヤーとも合法手がなくなった場合、終了
-    auto legal_p1 = get_all_legal_moves(board, Color::PLAYER1, player1);
-    auto legal_p2 = get_all_legal_moves(board, Color::PLAYER2, player2);
-    if (legal_p1.empty() && legal_p2.empty())
-      break;
   }
 
   // 最終スコアを返す（コピーされた player1/player2 の score を返す）
@@ -1106,11 +1110,17 @@ struct MCTSNode {
     Board sim_board = board;
     Player sim_p1 = player1;
     Player sim_p2 = player2;
-
+    Color sim_turn = current_player;
+    double result = -1.0;
     auto [score1, score2] = random_playout(sim_board, sim_p1, sim_p2);
 
-    double result = (score1 > score2) ? 1.0 : (score1 == score2 ? 0.5 : 0.0);
-
+    if (current_player == Color::PLAYER1) {
+      result = (score1 > score2) ? 1.0 : (score1 == score2 ? 0.5 : 0.0);
+      cout << result << endl;
+    } else {
+      result = (score2 > score1) ? 1.0 : (score1 == score2 ? 0.5 : 0.0);
+      cout << result << endl;
+    }
     return result;
   }
 
@@ -1141,6 +1151,10 @@ struct MCTSNode {
         blk.rotate_block(rot);
 
         board.change_status(turn, blk, id, rot, x, y, *cur);
+        cout << "Step " << step + 1 << ": "
+             << ((turn == Color::PLAYER1) ? "P1" : "P2") << " plays block "
+             << id << " at (" << x << "," << y << ") rot=" << rot << "\n";
+        board.print_status(turn);
       }
 
       turn = (turn == Color::PLAYER1) ? Color::PLAYER2 : Color::PLAYER1;
@@ -1148,7 +1162,7 @@ struct MCTSNode {
 
     if (start_turn == Color::PLAYER1) {
       if (p1.score > p2.score)
-        cout << "P1(WIN) wins\n";
+        cout << "P1 wins\n";
       return 1.0;
       if (p1.score < p2.score) {
         cout << "P2 wins\n";
@@ -1160,7 +1174,7 @@ struct MCTSNode {
         cout << "P2 wins\n";
       return 1.0;
       if (p2.score < p1.score) {
-        cout << "P1(WIN) wins\n";
+        cout << "P1 wins\n";
         return 0.0;
       }
       return 0.5; // 引き分け
@@ -1337,13 +1351,13 @@ std::tuple<std::string, int, int, int> MCTS(Board root_board, Player root_p1,
 
   switch (phase) {
   case GamePhase::OPENING:
-    iterations = 5000;
+    iterations = 500;
     break;
   case GamePhase::MIDDLE:
-    iterations = 2000;
+    iterations = 300;
     break;
   case GamePhase::ENDING:
-    iterations = 1000;
+    iterations = 100;
     break;
   }
 
@@ -1382,8 +1396,7 @@ std::tuple<std::string, int, int, int> MCTS(Board root_board, Player root_p1,
     }
 
     if (ai_type == AIType::MCTS_WIN) {
-      result = node->fast_simulation(node->board, node->player1, node->player2,
-                                     node->current_player, 40);
+      result = node->simulate();
     }
 
     node->eval_value = result;
@@ -1567,8 +1580,8 @@ int main() {
     auto [block_id, x, y, rot] = MCTS(board, p1, p2, Color::PLAYER1, iterations,
                                       MAX_TREE_DEPTH, AIType::MCTS_EVAL);*/
 
-    auto result = play_game(board, p1, p2, Color::PLAYER1, AIType::MCTS_WIN,
-                            AIType::RANDOM, iterations, MAX_TREE_DEPTH);
+    auto result = play_game(board, p1, p2, Color::PLAYER1, AIType::RANDOM,
+                            AIType::MCTS_WIN, iterations, MAX_TREE_DEPTH);
 
     if (result == GameResult::P1_WIN)
       win_win++;
