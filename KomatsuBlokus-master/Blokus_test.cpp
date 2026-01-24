@@ -888,10 +888,7 @@ vector<string> get_legal_block_types(Board &board, Color player_color,
   return legal_blocks;
 }
 
-// ランダムプレイアウト関数
-pair<int, int> random_playout(Board board, Player player1,
-                              Player player2) // MCTS時は値渡し（コピー）でOK
-{
+pair<int, int> random_playout(Board board, Player player1, Player player2) {
   // プレイヤー順番
   Color current_color = Color::PLAYER1;
 
@@ -909,14 +906,11 @@ pair<int, int> random_playout(Board board, Player player1,
         // board.print_status(Color::PLAYER1);  /*  デバッグ用  */
         break;
       } else {
-        // パス
-        // 次のプレイヤーに交代
         current_color =
             (current_color == Color::PLAYER1) ? Color::PLAYER2 : Color::PLAYER1;
         continue;
       }
     } else {
-      // ランダムに1手選択
       std::uniform_int_distribution<> dis(0, (int)legal_moves.size() - 1);
       int idx = dis(gen);
 
@@ -924,17 +918,14 @@ pair<int, int> random_playout(Board board, Player player1,
       BlockData data = getBlock(block_id);
       Block block(data);
 
-      // 盤面を更新（スコアも更新される）
       board.change_status(current_color, block, block_id, rot, x, y,
                           *current_player);
     }
 
-    // 次のプレイヤーに交代
     current_color =
         (current_color == Color::PLAYER1) ? Color::PLAYER2 : Color::PLAYER1;
   }
 
-  // 最終スコアを返す（コピーされた player1/player2 の score を返す）
   return {player1.score, player2.score};
 }
 
@@ -1116,10 +1107,8 @@ struct MCTSNode {
 
     if (current_player == Color::PLAYER1) {
       result = (score1 > score2) ? 1.0 : (score1 == score2 ? 0.5 : 0.0);
-      cout << result << endl;
     } else {
       result = (score2 > score1) ? 1.0 : (score1 == score2 ? 0.5 : 0.0);
-      cout << result << endl;
     }
     return result;
   }
@@ -1351,10 +1340,10 @@ std::tuple<std::string, int, int, int> MCTS(Board root_board, Player root_p1,
 
   switch (phase) {
   case GamePhase::OPENING:
-    iterations = 500;
+    iterations = 100;
     break;
   case GamePhase::MIDDLE:
-    iterations = 300;
+    iterations = 100;
     break;
   case GamePhase::ENDING:
     iterations = 100;
@@ -1532,15 +1521,15 @@ int main() {
       {{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
        {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
        {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-       {1, 0, 0, 0, 2, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-       {1, 0, 0, 2, 1, 3, 1, 2, 0, 0, 0, 0, 0, 0, 0, 1},
-       {1, 0, 0, 1, 3, 3, 3, 1, 0, 0, 0, 0, 0, 0, 0, 1},
-       {1, 0, 0, 2, 1, 3, 1, 2, 0, 0, 0, 0, 0, 0, 0, 1},
-       {1, 0, 0, 0, 2, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 1},
        {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-       {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 1},
-       {1, 0, 0, 0, 0, 0, 0, 0, 0, 4, 4, 4, 0, 0, 0, 1},
-       {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 1},
+       {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+       {1, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+       {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+       {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+       {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+       {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+       {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+       {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
        {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
        {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
        {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
@@ -1550,15 +1539,15 @@ int main() {
        {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
        {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
        {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-       {1, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-       {1, 0, 0, 0, 4, 4, 4, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-       {1, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
        {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-       {1, 0, 0, 0, 0, 0, 0, 0, 0, 2, 1, 2, 0, 0, 0, 1},
-       {1, 0, 0, 0, 0, 0, 0, 0, 2, 1, 3, 1, 2, 0, 0, 1},
-       {1, 0, 0, 0, 0, 0, 0, 0, 1, 3, 3, 3, 1, 0, 0, 1},
-       {1, 0, 0, 0, 0, 0, 0, 0, 2, 1, 3, 1, 2, 0, 0, 1},
-       {1, 0, 0, 0, 0, 0, 0, 0, 0, 2, 1, 2, 0, 0, 0, 1},
+       {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+       {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+       {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+       {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+       {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+       {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 1},
+       {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+       {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
        {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
        {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
        {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}}};
@@ -1571,8 +1560,8 @@ int main() {
   for (int i = 0; i < N; i++) {
 
     Board board(TILE_NUMBER, input_board);
-    Player p1{Color::PLAYER1, {"u"}};
-    Player p2{Color::PLAYER2, {"u"}};
+    Player p1{Color::PLAYER1, {""}};
+    Player p2{Color::PLAYER2, {""}};
 
     /*cout << "legal moves: "
          << get_all_legal_moves(board, Color::PLAYER1, p1).size() << endl;
@@ -1580,8 +1569,8 @@ int main() {
     auto [block_id, x, y, rot] = MCTS(board, p1, p2, Color::PLAYER1, iterations,
                                       MAX_TREE_DEPTH, AIType::MCTS_EVAL);*/
 
-    auto result = play_game(board, p1, p2, Color::PLAYER1, AIType::RANDOM,
-                            AIType::MCTS_WIN, iterations, MAX_TREE_DEPTH);
+    auto result = play_game(board, p1, p2, Color::PLAYER1, AIType::MCTS_WIN,
+                            AIType::RANDOM, iterations, MAX_TREE_DEPTH);
 
     if (result == GameResult::P1_WIN)
       win_win++;
@@ -1592,8 +1581,8 @@ int main() {
   for (int i = 0; i < N; i++) {
 
     Board board(TILE_NUMBER, input_board);
-    Player p1{Color::PLAYER1, {"u"}};
-    Player p2{Color::PLAYER2, {"u"}};
+    Player p1{Color::PLAYER1, {""}};
+    Player p2{Color::PLAYER2, {""}};
 
     /*cout << "legal moves: "
          << get_all_legal_moves(board, Color::PLAYER1, p1).size() << endl;
