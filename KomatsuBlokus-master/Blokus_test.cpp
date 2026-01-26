@@ -780,6 +780,7 @@ vector<tuple<string, int, int, int>> get_fast_legal_moves(Board &board,
 
   vector<tuple<string, int, int, int>> moves;
 
+  // --- 未使用ブロック列挙 ---
   vector<string> unused_blocks;
   for (auto &[id, _] : block_table) {
     if (find(player.used_blocks.begin(), player.used_blocks.end(), id) ==
@@ -788,38 +789,36 @@ vector<tuple<string, int, int, int>> get_fast_legal_moves(Board &board,
     }
   }
 
+  if (unused_blocks.empty())
+    return moves;
+
   static thread_local mt19937 gen(random_device{}());
 
-  // ★ ランダム化
-  shuffle(unused_blocks.begin(), unused_blocks.end(), gen);
+  // --- 未使用ブロックから1つランダム選択 ---
+  uniform_int_distribution<> block_dis(0, unused_blocks.size() - 1);
+  string block_id = unused_blocks[block_dis(gen)];
 
-  for (auto &block_id : unused_blocks) {
-    Block base(getBlock(block_id));
+  BlockData data = getBlock(block_id);
+  Block base(data);
 
-    for (int rot = 0; rot < 8; rot++) {
-      Block tmp = base;
-      tmp.rotate_block(rot);
+  // --- 選ばれたブロックについてのみ合法手探索 ---
+  for (int rot = 0; rot < 8; ++rot) {
+    Block tmp = base;
+    tmp.rotate_block(rot);
 
-      auto positions =
-          board.search_settable_position_near_ableset(color, tmp.shape);
+    auto positions =
+        board.search_settable_position_near_ableset(color, tmp.shape);
 
-      // 大きさでソート
-      sort(unused_blocks.begin(), unused_blocks.end(),
-           [&](const string &a, const string &b) {
-             return getBlock(a).score > getBlock(b).score;
-           });
-
-      // 上位K個だけランダム
-      int K = min(5, (int)unused_blocks.size());
-      shuffle(unused_blocks.begin(), unused_blocks.begin() + K, gen);
-
-      for (auto &[x, y] : positions) {
-        moves.emplace_back(block_id, x, y, rot);
-        if ((int)moves.size() >= max_moves)
-          return moves;
-      }
+    for (auto &[x, y] : positions) {
+      moves.emplace_back(block_id, x, y, rot);
+      if ((int)moves.size() >= max_moves)
+        return moves;
     }
   }
+
+  // --- 合法手が複数ある場合はランダム化 ---
+  shuffle(moves.begin(), moves.end(), gen);
+
   return moves;
 }
 
@@ -920,6 +919,7 @@ pair<int, int> random_playout(Board board, Player player1, Player player2) {
 
       board.change_status(current_color, block, block_id, rot, x, y,
                           *current_player);
+      // board.print_status(current_color); /*  デバッグ用  */
     }
 
     current_color =
@@ -1496,14 +1496,18 @@ GameResult play_game(Board board, Player p1, Player p2, Color start_turn,
     turn = (turn == Color::PLAYER1) ? Color::PLAYER2 : Color::PLAYER1;
   }
 
-  if (p1.score > p2.score)
+  if (p1.score > p2.score) {
+    cout << "Final Score - P1: " << p1.score << ", P2: " << p2.score << "\n";
     cout << "P1 is WIN!"
          << "\n";
-  return GameResult::P1_WIN;
-  if (p2.score > p1.score)
+    return GameResult::P1_WIN;
+  }
+  if (p2.score > p1.score) {
+    cout << "Final Score - P1: " << p1.score << ", P2: " << p2.score << "\n";
     cout << "P2 is WIN!"
          << "\n";
-  return GameResult::P2_WIN;
+    return GameResult::P2_WIN;
+  }
   return GameResult::DRAW;
 }
 
@@ -1553,11 +1557,12 @@ int main() {
        {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}}};
 
   int win_eval = 0;
-  int win_win = 0;
-  int win_rand = 0;
+  int win_win[] = {0, 0};
+  int win_rand[] = {0, 0};
   int N = 50;
 
-  for (int i = 0; i < N; i++) {
+  for (int i = 0; i < 50; i++) {
+    cout << "===== WIN vs RAND Game " << i + 1 << " =====" << endl;
 
     Board board(TILE_NUMBER, input_board);
     Player p1{Color::PLAYER1, {""}};
@@ -1573,12 +1578,13 @@ int main() {
                             AIType::RANDOM, iterations, MAX_TREE_DEPTH);
 
     if (result == GameResult::P1_WIN)
-      win_win++;
+      win_win[0]++;
     if (result == GameResult::P2_WIN)
-      win_rand++;
+      win_rand[0]++;
   }
 
   for (int i = 0; i < N; i++) {
+    cout << "===== RAND vs WIN Game " << i + 1 << " =====\n";
 
     Board board(TILE_NUMBER, input_board);
     Player p1{Color::PLAYER1, {""}};
@@ -1594,12 +1600,17 @@ int main() {
                             AIType::MCTS_WIN, iterations, MAX_TREE_DEPTH);
 
     if (result == GameResult::P1_WIN)
-      win_rand++;
+      win_rand[1]++;
     if (result == GameResult::P2_WIN)
-      win_win++;
+      win_win[1]++;
   }
+  cout << "WIN vs RAND results: " << win_win[0] << " - " << win_rand[0] << endl;
+  cout << "RAND vs WIN results: " << win_rand[1] << " - " << win_win[1] << endl;
 
-  cout << "(WIN) win rate = " << (double)win_win / (N * 2) << endl;
-  cout << "(RAND) win rate = " << (double)win_rand / (N * 2) << endl;
+  cout << "=====  Results =====" << endl;
+  cout << "(WIN) win rate = " << (double)(win_win[0] + win_win[1]) / (N * 2)
+       << endl;
+  cout << "(RAND) win rate = " << (double)(win_rand[0] + win_rand[1]) / (N * 2)
+       << endl;
   return 0;
 }
