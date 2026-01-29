@@ -460,7 +460,7 @@ BlockData getBlock(const std::string &id) {
   return it->second;
 }
 
-int main() {
+int main_past() {
   // ブロック"t"を取得
   const auto &data = block_table.at("n");
   Block block(data);
@@ -483,4 +483,12 @@ int main() {
   }
 
   return 0;
+}
+
+int main() {
+  std::vector<std::tuple<std::string, int, int, int>> moves;
+  moves = {{"a", 1, 1, 1}, {"b", 2, 2, 2}};
+  auto [block_id, x, y, rot] = moves[rand() % moves.size()];
+  cout << "=Select=\nID:" << block_id << "\n(x,y):(" << x << "," << y
+       << ")\nrot:" << rot << endl;
 }
