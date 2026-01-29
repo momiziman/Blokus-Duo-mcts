@@ -495,6 +495,7 @@ BlockData getBlock(const std::string &id) {
 struct Player {
   Color color;
   vector<string> used_blocks; // 使用済みブロックIDを記録
+  int turn_num = 1;
   int score = 0;
 };
 
@@ -887,9 +888,14 @@ vector<string> get_legal_block_types(Board &board, Color player_color,
   return legal_blocks;
 }
 
-pair<int, int> random_playout(Board board, Player player1, Player player2) {
-  // プレイヤー順番
-  Color current_color = Color::PLAYER1;
+pair<int, int> random_playout(Board board, Player player1, Player player2,
+                              Color turn) {
+  // cout << "=== Random Playout Start ===" << endl;
+  // board.print_status(Color::PLAYER1); /*  デバッグ用  */
+
+  Color current_color = turn;
+  current_color =
+      (current_color == Color::PLAYER1) ? Color::PLAYER1 : Color::PLAYER2;
 
   static thread_local std::mt19937 gen((std::random_device())());
 
@@ -1103,7 +1109,7 @@ struct MCTSNode {
     Player sim_p2 = player2;
     Color sim_turn = current_player;
     double result = -1.0;
-    auto [score1, score2] = random_playout(sim_board, sim_p1, sim_p2);
+    auto [score1, score2] = random_playout(sim_board, sim_p1, sim_p2, sim_turn);
 
     if (current_player == Color::PLAYER1) {
       result = (score1 > score2) ? 1.0 : (score1 == score2 ? 0.5 : 0.0);
@@ -1199,6 +1205,11 @@ struct MCTSNode {
       Block blk(getBlock(block_id));
       blk.rotate_block(rot);
       board.change_status(turn, blk, block_id, rot, x, y, *cur);
+
+      cout << "Playout Step " << depth + 1 << ": "
+           << ((turn == Color::PLAYER1) ? "P1" : "P2") << " plays block "
+           << block_id << " at (" << x << "," << y << ") rot=" << rot << "\n";
+      board.print_status(turn); /*  デバッグ用  */
 
       turn = (turn == Color::PLAYER1) ? Color::PLAYER2 : Color::PLAYER1;
     }
@@ -1340,13 +1351,13 @@ std::tuple<std::string, int, int, int> MCTS(Board root_board, Player root_p1,
 
   switch (phase) {
   case GamePhase::OPENING:
-    iterations = 100;
+    iterations = 1000;
     break;
   case GamePhase::MIDDLE:
-    iterations = 100;
+    iterations = 1000;
     break;
   case GamePhase::ENDING:
-    iterations = 100;
+    iterations = 1000;
     break;
   }
 
@@ -1482,12 +1493,14 @@ GameResult play_game(Board board, Player p1, Player p2, Color start_turn,
         Block blk(getBlock(block_id));
         board.change_status(turn, blk, block_id, rot, x, y, *current);
         if (turn == Color::PLAYER1) {
-          cout << "PLAYER1 placed block " << block_id << " at (" << x << ","
-               << y << ") with rotation " << rot << "\n";
+          p1.turn_num++;
+          cout << "Turn" << p1.turn_num << "- PLAYER1 placed block " << block_id
+               << " at (" << x << "," << y << ") with rotation " << rot << "\n";
           board.print_status(turn);
         } else {
-          cout << "PLAYER2 placed block " << block_id << " at (" << x << ","
-               << y << ") with rotation " << rot << "\n";
+          p2.turn_num++;
+          cout << "Turn" << p2.turn_num << "- PLAYER2 placed block " << block_id
+               << " at (" << x << "," << y << ") with rotation " << rot << "\n";
           board.print_status(turn);
         }
       }
@@ -1612,5 +1625,59 @@ int main() {
        << endl;
   cout << "(RAND) win rate = " << (double)(win_rand[0] + win_rand[1]) / (N * 2)
        << endl;
+  return 0;
+}
+
+int main_legal_test() {
+  init_block_ids_by_size();
+
+  // --- 盤面初期化 ---
+  vector<vector<vector<int>>> input_board = {
+      // ...（あなたの貼った盤面をそのまま使用）
+      // PLAYER1
+      {{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+       {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+       {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+       {1, 0, 0, 0, 2, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+       {1, 0, 0, 2, 1, 3, 1, 2, 0, 0, 0, 0, 0, 0, 0, 1},
+       {1, 0, 0, 1, 3, 3, 3, 1, 0, 0, 0, 0, 0, 0, 0, 1},
+       {1, 0, 0, 2, 1, 3, 1, 2, 0, 0, 0, 0, 0, 0, 0, 1},
+       {1, 0, 0, 0, 2, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+       {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+       {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 1},
+       {1, 0, 0, 0, 0, 0, 0, 0, 0, 4, 4, 4, 0, 0, 0, 1},
+       {1, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 1},
+       {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+       {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+       {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+       {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}},
+      // PLAYER2
+      {{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+       {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+       {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+       {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+       {1, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+       {1, 0, 0, 0, 4, 4, 4, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+       {1, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+       {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+       {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 1, 2, 0, 0, 1},
+       {1, 0, 0, 0, 0, 0, 0, 0, 2, 1, 1, 3, 1, 0, 0, 1},
+       {1, 0, 0, 0, 0, 0, 0, 0, 1, 3, 3, 3, 1, 0, 0, 1},
+       {1, 0, 0, 0, 0, 0, 0, 0, 1, 3, 1, 1, 2, 0, 0, 1},
+       {1, 0, 0, 0, 0, 0, 0, 0, 2, 1, 2, 0, 0, 0, 0, 1},
+       {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+       {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+       {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}}};
+
+  Board board(TILE_NUMBER, input_board);
+  Player p1{Color::PLAYER1, {""}};
+  Player p2{Color::PLAYER2, {""}};
+
+  auto legal_moves = get_all_legal_moves(board, Color::PLAYER1, p1);
+  cout << "Legal moves for PLAYER1: " << legal_moves.size() << endl;
+  for (const auto &[block_id, x, y, rot] : legal_moves) {
+    cout << "Block ID: " << block_id << ", Position: (" << x << ", " << y
+         << "), Rotation: " << rot << endl;
+  }
   return 0;
 }
