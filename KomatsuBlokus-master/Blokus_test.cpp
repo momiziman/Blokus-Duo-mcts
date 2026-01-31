@@ -927,22 +927,22 @@ double evaluate(Board &board, Player &p1, Player &p2, Color turn,
 
   switch (phase) {
   case GamePhase::OPENING:
-    w_score = 0.6;
-    w_mymob = 0.2;
-    w_opmob = 0.2;
-    w_cant = 0.0;
-    break;
-  case GamePhase::MIDDLE:
-    w_score = 0.8;
-    w_mymob = 0.1;
-    w_opmob = 0.1;
-    w_cant = 0.0;
-    break;
-  case GamePhase::ENDING:
-    w_score = 0.9;
+    w_score = 0.0;
     w_mymob = 0.0;
     w_opmob = 0.0;
-    w_cant = 0.1;
+    w_cant = 1.0;
+    break;
+  case GamePhase::MIDDLE:
+    w_score = 0.0;
+    w_mymob = 0.0;
+    w_opmob = 0.0;
+    w_cant = 1.0;
+    break;
+  case GamePhase::ENDING:
+    w_score = 0.0;
+    w_mymob = 0.0;
+    w_opmob = 0.0;
+    w_cant = 1.0;
     break;
   }
 
@@ -1413,10 +1413,10 @@ std::tuple<std::string, int, int, int> MCTS(Board root_board, Player root_p1,
     iterations = 2000;
     break;
   case GamePhase::MIDDLE:
-    iterations = 600;
+    iterations = 700;
     break;
   case GamePhase::ENDING:
-    iterations = 300;
+    iterations = 500;
     break;
   }
 
@@ -1684,11 +1684,11 @@ int main() {
                             iterations, MAX_TREE_DEPTH);
 
     if (result == GameResult::P1_WIN && p1_ai == AIType::RANDOM)
-      win_p2_ai[1]++;
+      win_p1_ai[1]++;
     if (result == GameResult::P2_WIN && p2_ai == AIType::MCTS_EVAL)
-      win_p1_ai[1]++;
+      win_p2_ai[1]++;
     if (result == GameResult::P2_WIN && p2_ai == AIType::MCTS_WIN)
-      win_p1_ai[1]++;
+      win_p2_ai[1]++;
     if (result == GameResult::P2_WIN && p2_ai == AIType::RANDOM)
       win_p2_ai[1]++;
   }
