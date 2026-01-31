@@ -495,7 +495,6 @@ BlockData getBlock(const std::string &id) {
 struct Player {
   Color color;
   vector<string> used_blocks; // 使用済みブロックIDを記録
-  int turn_num = 1;
   int score = 0;
   int turn_num;
 };
@@ -826,18 +825,15 @@ get_fast_legal_moves(Board &board, Color color, Player &player, int max_moves) {
     auto positions =
         board.search_settable_position_near_ableset(color, tmp.shape);
 
-<<<<<<< HEAD
     for (auto &[x, y] : positions) {
       moves.emplace_back(block_id, x, y, rot);
       if ((int)moves.size() >= max_moves)
         return moves;
-=======
       for (auto &[x, y] : positions) {
         moves.emplace_back(block_id, x, y, rot);
         if ((int)moves.size() >= max_moves)
           return moves;
       }
->>>>>>> ced867d18792e7742d6358a80d4c19685db44870
     }
   }
 
@@ -912,18 +908,9 @@ vector<string> get_legal_block_types(Board &board, Color player_color,
   return legal_blocks;
 }
 
-<<<<<<< HEAD
-pair<int, int> random_playout(Board board, Player player1, Player player2,
-                              Color turn) {
-  // cout << "=== Random Playout Start ===" << endl;
-  // board.print_status(Color::PLAYER1); /*  デバッグ用  */
-
-  Color current_color = turn;
-  current_color =
-      (current_color == Color::PLAYER1) ? Color::PLAYER1 : Color::PLAYER2;
-=======
-int mobility(Board &board, Color c, Player &p) {
-  return get_fast_legal_moves(board, c, p, 50).size();
+int mobility(Board &board, Color color, Player &player) {
+  int mob = get_all_legal_moves(board, color, player).size();
+  return mob;
 }
 
 double evaluate(Board &board, Player &p1, Player &p2, Color turn,
@@ -935,65 +922,78 @@ double evaluate(Board &board, Player &p1, Player &p2, Color turn,
   double w_opmob;
   double w_cant;
 
+  int mymob = 0;
+  int opmob = 0;
+
   switch (phase) {
   case GamePhase::OPENING:
-    w_score = 1.0;
-    w_mymob = 0.0;
-    w_opmob = 0.0;
+    w_score = 0.6;
+    w_mymob = 0.2;
+    w_opmob = 0.2;
     w_cant = 0.0;
     break;
   case GamePhase::MIDDLE:
-    w_score = 1;
-    w_mymob = 0;
-    w_opmob = 0;
-    w_cant = 0;
+    w_score = 0.8;
+    w_mymob = 0.1;
+    w_opmob = 0.1;
+    w_cant = 0.0;
     break;
   case GamePhase::ENDING:
-    w_score = 1;
+    w_score = 0.9;
     w_mymob = 0.0;
     w_opmob = 0.0;
-    w_cant = 0.0;
+    w_cant = 0.1;
     break;
   }
 
   if (turn == Color::PLAYER1) {
     int score_lim = score_limitter(p1);
     int col = static_cast<int>(turn);
-    for (int y = 0; y < TILE_NUMBER + 2; y++) {
-      for (int x = 0; x < TILE_NUMBER + 2; x++) {
+    if (w_mymob != 0) {
+      mymob = mobility(board, Color::PLAYER1, p1);
+    }
+    if (w_opmob != 0) {
+      opmob = mobility(board, Color::PLAYER2, p2);
+    }
+    for (int y = 1; y < TILE_NUMBER + 2; y++) {
+      for (int x = 1; x < TILE_NUMBER + 2; x++) {
         int cell = board.status[col][y][x];
         if (cell == CANTSET)
           cant++;
       }
     }
-    int mymob = mobility(board, Color::PLAYER1, p1);
-    int opmob = mobility(board, Color::PLAYER2, p2);
-    r = w_score * p1.score / score_lim - w_cant * cant / 194 + w_mymob * mymob -
-        w_opmob * opmob;
-    cout << "P1 R:" << r << endl;
+    r = w_score * p1.score / score_lim - w_cant * cant / 194 +
+        w_mymob * mymob / 2000 - w_opmob * opmob / 2000;
   } else {
     int score_lim = score_limitter(p2);
     int col = static_cast<int>(Color::PLAYER2);
-    for (int y = 0; y < TILE_NUMBER + 2; y++) {
-      for (int x = 0; x < TILE_NUMBER + 2; x++) {
+    if (w_mymob != 0) {
+      mymob = mobility(board, Color::PLAYER2, p2);
+    }
+    if (w_opmob != 0) {
+      opmob = mobility(board, Color::PLAYER1, p1);
+    }
+    for (int y = 1; y < TILE_NUMBER + 2; y++) {
+      for (int x = 1; x < TILE_NUMBER + 2; x++) {
         int cell = board.status[col][y][x];
         if (cell == CANTSET)
           cant++;
       }
     }
-    int mymob = mobility(board, Color::PLAYER2, p2);
-    int opmob = mobility(board, Color::PLAYER1, p1);
-    r = w_score * p2.score / score_lim - w_cant * cant / 194 + w_mymob * mymob -
-        w_opmob * opmob;
-    cout << "P2 R:" << r << endl;
+    r = w_score * p2.score / score_lim - w_cant * cant / 194 +
+        w_mymob * mymob / 2000 - w_opmob * opmob / 2000;
   }
   return r;
 }
 
-pair<int, int> random_playout(Board board, Player player1, Player player2) {
-  // プレイヤー順番
-  Color current_color = Color::PLAYER1;
->>>>>>> ced867d18792e7742d6358a80d4c19685db44870
+pair<int, int> random_playout(Board board, Player player1, Player player2,
+                              Color turn) {
+  // cout << "=== Random Playout Start ===" << endl;
+  // board.print_status(Color::PLAYER1); /*  デバッグ用  */
+
+  Color current_color = turn;
+  current_color =
+      (current_color == Color::PLAYER1) ? Color::PLAYER1 : Color::PLAYER2;
 
   static thread_local std::mt19937 gen((std::random_device())());
 
@@ -1023,11 +1023,7 @@ pair<int, int> random_playout(Board board, Player player1, Player player2) {
 
       board.change_status(current_color, block, block_id, rot, x, y,
                           *current_player);
-<<<<<<< HEAD
       // board.print_status(current_color); /*  デバッグ用  */
-=======
-      // board.print_status(current_color);  //デバッグ用
->>>>>>> ced867d18792e7742d6358a80d4c19685db44870
     }
 
     current_color =
@@ -1069,8 +1065,10 @@ double heuristic_playout(Board board, Player p1, Player p2, Color turn) {
     BlockData data = getBlock(block_id);
     Block block(data);
     board.change_status(turn, block, block_id, rot, x, y, *cur);
-    /*cout << "=== PYAYOUT TEST ===" << endl;
-    board.print_status(turn);*/ // デバッグ用
+    /*cout << "Playout Step " << depth + 1 << ": "
+           << ((turn == Color::PLAYER1) ? "P1" : "P2") << " plays block "
+           << block_id << " at (" << x << "," << y << ") rot=" << rot << "\n";
+      board.print_status(turn); /*  デバッグ用  */
 
     turn = (turn == Color::PLAYER1) ? Color::PLAYER2 : Color::PLAYER1;
   }
@@ -1187,13 +1185,10 @@ struct MCTSNode {
     Player sim_p2 = player2;
     Color sim_turn = current_player;
     double result = -1.0;
-<<<<<<< HEAD
-    auto [score1, score2] = random_playout(sim_board, sim_p1, sim_p2, sim_turn);
-=======
->>>>>>> ced867d18792e7742d6358a80d4c19685db44870
 
     if (ai_type == AIType::MCTS_WIN) {
-      auto [score1, score2] = random_playout(sim_board, sim_p1, sim_p2);
+      auto [score1, score2] =
+          random_playout(sim_board, sim_p1, sim_p2, sim_turn);
 
       if (current_player == Color::PLAYER1) {
         result = (score1 > score2) ? 1.0 : (score1 == score2 ? 0.5 : 0.0);
@@ -1264,58 +1259,31 @@ struct MCTSNode {
     }
   }
 
-<<<<<<< HEAD
-  double heuristic_playout(Board board, Player p1, Player p2, Color turn) {
-    int PLAYOUT_DEPTH;
-    auto phase = board.get_phase(p1, p2);
-
-    switch (phase) {
-    case GamePhase::OPENING:
-      PLAYOUT_DEPTH == 5;
-      break;
-    case GamePhase::MIDDLE:
-      PLAYOUT_DEPTH == 7;
-      break;
-    case GamePhase::ENDING:
-      PLAYOUT_DEPTH == 30;
-      break;
-    }
-
-    for (int depth = 0; depth < PLAYOUT_DEPTH; depth++) {
-
-      Player *cur = (turn == Color::PLAYER1) ? &p1 : &p2;
-
-      auto moves = get_fast_legal_moves(board, turn, *cur, 20);
-      if (moves.empty())
-        break;
-
-      auto [block_id, x, y, rot] = moves[rand() % moves.size()];
-
-      Block blk(getBlock(block_id));
-      blk.rotate_block(rot);
-      board.change_status(turn, blk, block_id, rot, x, y, *cur);
-
-      cout << "Playout Step " << depth + 1 << ": "
-           << ((turn == Color::PLAYER1) ? "P1" : "P2") << " plays block "
-           << block_id << " at (" << x << "," << y << ") rot=" << rot << "\n";
-      board.print_status(turn); /*  デバッグ用  */
-
-      turn = (turn == Color::PLAYER1) ? Color::PLAYER2 : Color::PLAYER1;
-    }
-
-    return evaluate(board, p1, p2, turn, phase);
+  std::string color_to_string(Color c) {
+    return (c == Color::PLAYER1) ? "P1" : "P2";
   }
 
-=======
->>>>>>> ced867d18792e7742d6358a80d4c19685db44870
   // --- Backpropagation ---
-  void backpropagate(double result) {
+  void backpropagate(double result, Color root_player) {
     MCTSNode *node = this;
-    double r = result;
+
     while (node != nullptr) {
       node->visit_count++;
-      node->win_score += r;
-      r = -r; // 手番が変わるごとに反転
+
+      if (node->current_player == root_player) {
+        node->win_score += result;
+      } else {
+        node->win_score -= result;
+      }
+      /*if (node->depth != 0) {
+        cout << "Backpropagate Node Depth " << node->depth << ": Player "
+             << color_to_string(node->current_player) << ": Move "
+             << node->move_block_id << " (" << node->move_x << ","
+             << node->move_y << ") rot=" << node->move_rot
+             << ": visit_count=" << node->visit_count
+             << ", win_score=" << node->win_score << "\n";
+      } /* デバッグ用 */
+
       node = node->parent;
     }
   }
@@ -1442,13 +1410,13 @@ std::tuple<std::string, int, int, int> MCTS(Board root_board, Player root_p1,
 
   switch (phase) {
   case GamePhase::OPENING:
-    iterations = 1000;
+    iterations = 2000;
     break;
   case GamePhase::MIDDLE:
-    iterations = 1000;
+    iterations = 600;
     break;
   case GamePhase::ENDING:
-    iterations = 1000;
+    iterations = 300;
     break;
   }
 
@@ -1493,7 +1461,7 @@ std::tuple<std::string, int, int, int> MCTS(Board root_board, Player root_p1,
 
     // cout << "[MCTS] Backpropagation phase.\n";
     // 4. Backpropagation
-    node->backpropagate(result);
+    node->backpropagate(result, root_turn);
   }
 
   print_tree_recursive(root,
@@ -1583,12 +1551,10 @@ GameResult play_game(Board board, Player p1, Player p2, Color start_turn,
         Block blk(getBlock(block_id));
         board.change_status(turn, blk, block_id, rot, x, y, *current);
         if (turn == Color::PLAYER1) {
-          p1.turn_num++;
           cout << "Turn" << p1.turn_num << "- PLAYER1 placed block " << block_id
                << " at (" << x << "," << y << ") with rotation " << rot << "\n";
           board.print_status(turn);
         } else {
-          p2.turn_num++;
           cout << "Turn" << p2.turn_num << "- PLAYER2 placed block " << block_id
                << " at (" << x << "," << y << ") with rotation " << rot << "\n";
           board.print_status(turn);
@@ -1614,10 +1580,19 @@ GameResult play_game(Board board, Player p1, Player p2, Color start_turn,
   return GameResult::DRAW;
 }
 
+std::string Aitype_to_string(AIType c) {
+  return (c == AIType::MCTS_EVAL)  ? "EVAL"
+         : (c == AIType::MCTS_WIN) ? "WIN"
+                                   : "RAND";
+}
+
 int main() {
   const int TILE_NUMBER = 14;
   const int MAX_TREE_DEPTH = 10;
-  int iterations = 300; // 試行回数
+  int iterations = 300;
+  int N = 250;
+  AIType p1_ai = AIType::MCTS_EVAL;
+  AIType p2_ai = AIType::RANDOM;
 
   init_block_ids_by_size();
 
@@ -1659,12 +1634,10 @@ int main() {
        {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
        {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}}};
 
-  int win_eval = 0;
-  int win_win[] = {0, 0};
-  int win_rand[] = {0, 0};
-  int N = 50;
+  int win_p1_ai[] = {0, 0};
+  int win_p2_ai[] = {0, 0};
 
-  for (int i = 0; i < 50; i++) {
+  for (int i = 0; i < N; i++) {
     cout << "===== WIN vs RAND Game " << i + 1 << " =====" << endl;
 
     Board board(TILE_NUMBER, input_board);
@@ -1679,13 +1652,17 @@ int main() {
     auto [block_id, x, y, rot] = MCTS(board, p1, p2, Color::PLAYER1, iterations,
                                       MAX_TREE_DEPTH, AIType::MCTS_EVAL);*/
 
-    auto result = play_game(board, p1, p2, Color::PLAYER1, AIType::MCTS_WIN,
-                            AIType::RANDOM, iterations, MAX_TREE_DEPTH);
+    auto result = play_game(board, p1, p2, Color::PLAYER1, p1_ai, p2_ai,
+                            iterations, MAX_TREE_DEPTH);
 
-    if (result == GameResult::P1_WIN)
-      win_win[0]++;
-    if (result == GameResult::P2_WIN)
-      win_rand[0]++;
+    if (result == GameResult::P1_WIN && p1_ai == AIType::MCTS_EVAL)
+      win_p1_ai[0]++;
+    if (result == GameResult::P1_WIN && p1_ai == AIType::MCTS_WIN)
+      win_p1_ai[0]++;
+    if (result == GameResult::P1_WIN && p1_ai == AIType::RANDOM)
+      win_p1_ai[0]++;
+    if (result == GameResult::P2_WIN && p2_ai == AIType::RANDOM)
+      win_p2_ai[0]++;
   }
 
   for (int i = 0; i < N; i++) {
@@ -1703,21 +1680,29 @@ int main() {
     auto [block_id, x, y, rot] = MCTS(board, p1, p2, Color::PLAYER1, iterations,
                                       MAX_TREE_DEPTH, AIType::MCTS_EVAL);*/
 
-    auto result = play_game(board, p1, p2, Color::PLAYER1, AIType::RANDOM,
-                            AIType::MCTS_WIN, iterations, MAX_TREE_DEPTH);
+    auto result = play_game(board, p1, p2, Color::PLAYER1, p2_ai, p1_ai,
+                            iterations, MAX_TREE_DEPTH);
 
-    if (result == GameResult::P1_WIN)
-      win_rand[1]++;
-    if (result == GameResult::P2_WIN)
-      win_win[1]++;
+    if (result == GameResult::P1_WIN && p1_ai == AIType::RANDOM)
+      win_p2_ai[1]++;
+    if (result == GameResult::P2_WIN && p2_ai == AIType::MCTS_EVAL)
+      win_p1_ai[1]++;
+    if (result == GameResult::P2_WIN && p2_ai == AIType::MCTS_WIN)
+      win_p1_ai[1]++;
+    if (result == GameResult::P2_WIN && p2_ai == AIType::RANDOM)
+      win_p2_ai[1]++;
   }
-  cout << "WIN vs RAND results: " << win_win[0] << " - " << win_rand[0] << endl;
-  cout << "RAND vs WIN results: " << win_rand[1] << " - " << win_win[1] << endl;
+  cout << Aitype_to_string(p1_ai) << " vs " << Aitype_to_string(p2_ai)
+       << " results: " << win_p1_ai[0] << " - " << win_p2_ai[0] << endl;
+  cout << Aitype_to_string(p1_ai) << " vs " << Aitype_to_string(p2_ai)
+       << " results: " << win_p1_ai[1] << " - " << win_p2_ai[1] << endl;
 
   cout << "=====  Results =====" << endl;
-  cout << "(WIN) win rate = " << (double)(win_win[0] + win_win[1]) / (N * 2)
+  cout << Aitype_to_string(p1_ai)
+       << " win rate = " << (double)(win_p1_ai[0] + win_p1_ai[1]) / (N * 2)
        << endl;
-  cout << "(RAND) win rate = " << (double)(win_rand[0] + win_rand[1]) / (N * 2)
+  cout << Aitype_to_string(p2_ai)
+       << " win rate = " << (double)(win_p2_ai[0] + win_p2_ai[1]) / (N * 2)
        << endl;
   return 0;
 }
