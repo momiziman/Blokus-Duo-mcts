@@ -810,29 +810,29 @@ get_fast_legal_moves(Board &board, Color color, Player &player, int max_moves) {
 
   static thread_local mt19937 gen(random_device{}());
 
-  // --- 未使用ブロックから1つランダム選択 ---
-  uniform_int_distribution<> block_dis(0, unused_blocks.size() - 1);
-  string block_id = unused_blocks[block_dis(gen)];
+  // 未使用ブロックの探索順をランダム化
+  shuffle(unused_blocks.begin(), unused_blocks.end(), gen);
+  // --- 全未使用ブロックに対して探索 ---
+  for (const auto &block_id : unused_blocks) {
 
-  BlockData data = getBlock(block_id);
-  Block base(data);
+    BlockData data = getBlock(block_id);
+    Block base(data);
 
-  // --- 選ばれたブロックについてのみ合法手探索 ---
-  for (int rot = 0; rot < 8; ++rot) {
-    Block tmp = base;
-    tmp.rotate_block(rot);
+    // --- 回転・反転 ---
+    for (int rot = 0; rot < 8; ++rot) {
+      Block tmp = base;
+      tmp.rotate_block(rot);
 
-    auto positions =
-        board.search_settable_position_near_ableset(color, tmp.shape);
+      auto positions =
+          board.search_settable_position_near_ableset(color, tmp.shape);
 
-    for (auto &[x, y] : positions) {
-      moves.emplace_back(block_id, x, y, rot);
-      if ((int)moves.size() >= max_moves)
-        return moves;
       for (auto &[x, y] : positions) {
         moves.emplace_back(block_id, x, y, rot);
-        if ((int)moves.size() >= max_moves)
+
+        if ((int)moves.size() >= max_moves) {
+          shuffle(moves.begin(), moves.end(), gen);
           return moves;
+        }
       }
     }
   }
@@ -927,22 +927,22 @@ double evaluate(Board &board, Player &p1, Player &p2, Color turn,
 
   switch (phase) {
   case GamePhase::OPENING:
-    w_score = 0.0;
-    w_mymob = 0.0;
-    w_opmob = 0.0;
-    w_cant = 1.0;
+    w_score = 0.7;
+    w_mymob = 0.1;
+    w_opmob = 0.2;
+    w_cant = 0.0;
     break;
   case GamePhase::MIDDLE:
-    w_score = 0.0;
-    w_mymob = 0.0;
-    w_opmob = 0.0;
-    w_cant = 1.0;
+    w_score = 0.6;
+    w_mymob = 0.15;
+    w_opmob = 0.3;
+    w_cant = 0.0;
     break;
   case GamePhase::ENDING:
-    w_score = 0.0;
+    w_score = 0.9;
     w_mymob = 0.0;
     w_opmob = 0.0;
-    w_cant = 1.0;
+    w_cant = 0.1;
     break;
   }
 
@@ -980,7 +980,7 @@ double evaluate(Board &board, Player &p1, Player &p2, Color turn,
           cant++;
       }
     }
-    r = w_score * p1.score / score_lim - w_cant * cant / 194 +
+    r = w_score * p2.score / score_lim - w_cant * cant / 194 +
         w_mymob * mymob / 2000 - w_opmob * opmob / 2000;
   }
   return r;
@@ -1002,16 +1002,20 @@ pair<int, int> random_playout(Board board, Player player1, Player player2,
         (current_color == Color::PLAYER1) ? &player1 : &player2;
 
     auto legal_moves =
-        get_fast_legal_moves(board, current_color, *current_player, 30);
+        get_fast_legal_moves(board, current_color, *current_player, 300);
 
     if (legal_moves.empty()) {
-      if (get_fast_legal_moves(board, Color::PLAYER2, player2, 1).empty()) {
-        // board.print_status(Color::PLAYER1);  /*  デバッグ用  */
-        break;
-      } else {
+      if (legal_moves.empty()) {
         current_color =
             (current_color == Color::PLAYER1) ? Color::PLAYER2 : Color::PLAYER1;
-        continue;
+        Player *current_player =
+            (current_color == Color::PLAYER1) ? &player1 : &player2;
+        if (get_fast_legal_moves(board, current_color, *current_player, 1)
+                .empty()) {
+          break;
+        } else {
+          continue;
+        }
       }
     } else {
       std::uniform_int_distribution<> dis(0, (int)legal_moves.size() - 1);
@@ -1053,24 +1057,33 @@ double heuristic_playout(Board board, Player p1, Player p2, Color turn) {
 
     Player *cur = (turn == Color::PLAYER1) ? &p1 : &p2;
 
-    auto moves = get_fast_legal_moves(board, turn, *cur, 20);
-    if (moves.empty())
-      break;
+    auto moves = get_fast_legal_moves(board, turn, *cur, 300);
+    if (moves.empty()) {
+      turn = (turn == Color::PLAYER1) ? Color::PLAYER2 : Color::PLAYER1;
+      Player *cur = (turn == Color::PLAYER1) ? &p1 : &p2;
+      if (get_fast_legal_moves(board, turn, *cur, 1).empty()) {
+        break;
+      } else {
+        continue;
+      }
+    }
 
-    static thread_local std::mt19937 gen((std::random_device())());
-    std::uniform_int_distribution<> dis(0, (int)moves.size() - 1);
-    int idx = dis(gen);
+    else {
+      static thread_local std::mt19937 gen((std::random_device())());
+      std::uniform_int_distribution<> dis(0, (int)moves.size() - 1);
+      int idx = dis(gen);
 
-    auto [block_id, x, y, rot] = moves[idx];
-    BlockData data = getBlock(block_id);
-    Block block(data);
-    board.change_status(turn, block, block_id, rot, x, y, *cur);
-    /*cout << "Playout Step " << depth + 1 << ": "
-           << ((turn == Color::PLAYER1) ? "P1" : "P2") << " plays block "
-           << block_id << " at (" << x << "," << y << ") rot=" << rot << "\n";
-      board.print_status(turn); /*  デバッグ用  */
+      auto [block_id, x, y, rot] = moves[idx];
+      BlockData data = getBlock(block_id);
+      Block block(data);
+      board.change_status(turn, block, block_id, rot, x, y, *cur);
+      /*cout << "Playout Step " << depth + 1 << ": "
+             << ((turn == Color::PLAYER1) ? "P1" : "P2") << " plays block "
+             << block_id << " at (" << x << "," << y << ") rot=" << rot << "\n";
+        board.print_status(turn); /*  デバッグ用  */
 
-    turn = (turn == Color::PLAYER1) ? Color::PLAYER2 : Color::PLAYER1;
+      turn = (turn == Color::PLAYER1) ? Color::PLAYER2 : Color::PLAYER1;
+    }
   }
 
   return evaluate(board, p1, p2, turn, phase);
@@ -1213,7 +1226,7 @@ struct MCTSNode {
 
       Player *cur = (turn == Color::PLAYER1) ? &p1 : &p2;
 
-      auto moves = get_fast_legal_moves(board, turn, *cur, 30);
+      auto moves = get_fast_legal_moves(board, turn, *cur, 300);
 
       if (moves.empty()) {
         pass_count++;
@@ -1591,7 +1604,7 @@ int main() {
   const int MAX_TREE_DEPTH = 10;
   int iterations = 300;
   int N = 100;
-  AIType p1_ai = AIType::MCTS_EVAL;
+  AIType p1_ai = AIType::MCTS_WIN;
   AIType p2_ai = AIType::RANDOM;
 
   init_block_ids_by_size();
@@ -1638,7 +1651,8 @@ int main() {
   int win_p2_ai[] = {0, 0};
 
   for (int i = 0; i < N; i++) {
-    cout << "===== WIN vs RAND Game " << i + 1 << " =====" << endl;
+    cout << "===== " << Aitype_to_string(p1_ai) << " vs "
+         << Aitype_to_string(p2_ai) << " Game " << i + 1 << " =====" << endl;
 
     Board board(TILE_NUMBER, input_board);
     Player p1{Color::PLAYER1, {""}};
@@ -1662,7 +1676,8 @@ int main() {
   }
 
   for (int i = 0; i < N; i++) {
-    cout << "===== RAND vs WIN Game " << i + 1 << " =====\n";
+    cout << "===== " << Aitype_to_string(p2_ai) << " vs "
+         << Aitype_to_string(p1_ai) << " Game " << i + 1 << " =====" << endl;
 
     Board board(TILE_NUMBER, input_board);
     Player p1{Color::PLAYER1, {""}};
@@ -1744,11 +1759,11 @@ int main_legal_test() {
   Player p1{Color::PLAYER1, {""}};
   Player p2{Color::PLAYER2, {""}};
 
-  auto legal_moves = get_all_legal_moves(board, Color::PLAYER1, p1);
-  cout << "Legal moves for PLAYER1: " << legal_moves.size() << endl;
-  for (const auto &[block_id, x, y, rot] : legal_moves) {
-    cout << "Block ID: " << block_id << ", Position: (" << x << ", " << y
-         << "), Rotation: " << rot << endl;
+  vector<tuple<string, int, int, int>> moves =
+      get_fast_legal_moves(board, Color::PLAYER1, p1, 10);
+  for (int i = 0; i < 10; i++) {
+    auto [block_id, x, y, rot] = moves[i];
+    cout << block_id << ", (" << x << "," << y << "), rot:" << rot << endl;
   }
   return 0;
 }
