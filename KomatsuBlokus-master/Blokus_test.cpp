@@ -980,7 +980,7 @@ double evaluate(Board &board, Player &p1, Player &p2, Color turn,
           cant++;
       }
     }
-    r = w_score * p2.score / score_lim - w_cant * cant / 194 +
+    r = w_score * p1.score / score_lim - w_cant * cant / 194 +
         w_mymob * mymob / 2000 - w_opmob * opmob / 2000;
   }
   return r;
@@ -1410,7 +1410,7 @@ std::tuple<std::string, int, int, int> MCTS(Board root_board, Player root_p1,
 
   switch (phase) {
   case GamePhase::OPENING:
-    iterations = 2000;
+    iterations = 1500;
     break;
   case GamePhase::MIDDLE:
     iterations = 700;
@@ -1590,7 +1590,7 @@ int main() {
   const int TILE_NUMBER = 14;
   const int MAX_TREE_DEPTH = 10;
   int iterations = 300;
-  int N = 250;
+  int N = 100;
   AIType p1_ai = AIType::MCTS_EVAL;
   AIType p2_ai = AIType::RANDOM;
 
@@ -1655,13 +1655,9 @@ int main() {
     auto result = play_game(board, p1, p2, Color::PLAYER1, p1_ai, p2_ai,
                             iterations, MAX_TREE_DEPTH);
 
-    if (result == GameResult::P1_WIN && p1_ai == AIType::MCTS_EVAL)
+    if (result == GameResult::P1_WIN)
       win_p1_ai[0]++;
-    if (result == GameResult::P1_WIN && p1_ai == AIType::MCTS_WIN)
-      win_p1_ai[0]++;
-    if (result == GameResult::P1_WIN && p1_ai == AIType::RANDOM)
-      win_p1_ai[0]++;
-    if (result == GameResult::P2_WIN && p2_ai == AIType::RANDOM)
+    if (result == GameResult::P2_WIN)
       win_p2_ai[0]++;
   }
 
@@ -1683,19 +1679,15 @@ int main() {
     auto result = play_game(board, p1, p2, Color::PLAYER1, p2_ai, p1_ai,
                             iterations, MAX_TREE_DEPTH);
 
-    if (result == GameResult::P1_WIN && p1_ai == AIType::RANDOM)
+    if (result == GameResult::P1_WIN)
+      win_p2_ai[1]++;
+    if (result == GameResult::P2_WIN)
       win_p1_ai[1]++;
-    if (result == GameResult::P2_WIN && p2_ai == AIType::MCTS_EVAL)
-      win_p2_ai[1]++;
-    if (result == GameResult::P2_WIN && p2_ai == AIType::MCTS_WIN)
-      win_p2_ai[1]++;
-    if (result == GameResult::P2_WIN && p2_ai == AIType::RANDOM)
-      win_p2_ai[1]++;
   }
   cout << Aitype_to_string(p1_ai) << " vs " << Aitype_to_string(p2_ai)
        << " results: " << win_p1_ai[0] << " - " << win_p2_ai[0] << endl;
-  cout << Aitype_to_string(p1_ai) << " vs " << Aitype_to_string(p2_ai)
-       << " results: " << win_p1_ai[1] << " - " << win_p2_ai[1] << endl;
+  cout << Aitype_to_string(p2_ai) << " vs " << Aitype_to_string(p1_ai)
+       << " results: " << win_p2_ai[1] << " - " << win_p1_ai[1] << endl;
 
   cout << "=====  Results =====" << endl;
   cout << Aitype_to_string(p1_ai)
