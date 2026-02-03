@@ -812,27 +812,26 @@ get_fast_legal_moves(Board &board, Color color, Player &player, int max_moves) {
 
   // 未使用ブロックの探索順をランダム化
   shuffle(unused_blocks.begin(), unused_blocks.end(), gen);
-  // --- 全未使用ブロックに対して探索 ---
-  for (const auto &block_id : unused_blocks) {
 
-    BlockData data = getBlock(block_id);
-    Block base(data);
+  string block_id = unused_blocks[0]; // 最初のブロックのみ使用
 
-    // --- 回転・反転 ---
-    for (int rot = 0; rot < 8; ++rot) {
-      Block tmp = base;
-      tmp.rotate_block(rot);
+  BlockData data = getBlock(block_id);
+  Block base(data);
 
-      auto positions =
-          board.search_settable_position_near_ableset(color, tmp.shape);
+  // --- 回転・反転 ---
+  for (int rot = 0; rot < 8; ++rot) {
+    Block tmp = base;
+    tmp.rotate_block(rot);
 
-      for (auto &[x, y] : positions) {
-        moves.emplace_back(block_id, x, y, rot);
+    auto positions =
+        board.search_settable_position_near_ableset(color, tmp.shape);
 
-        if ((int)moves.size() >= max_moves) {
-          shuffle(moves.begin(), moves.end(), gen);
-          return moves;
-        }
+    for (auto &[x, y] : positions) {
+      moves.emplace_back(block_id, x, y, rot);
+
+      if ((int)moves.size() >= max_moves) {
+        shuffle(moves.begin(), moves.end(), gen);
+        return moves;
       }
     }
   }
@@ -1025,9 +1024,11 @@ pair<int, int> random_playout(Board board, Player player1, Player player2,
       BlockData data = getBlock(block_id);
       Block block(data);
 
+      cout << "Block id: " << block_id
+           << ", legal_moves size: " << legal_moves.size() << endl;
       board.change_status(current_color, block, block_id, rot, x, y,
                           *current_player);
-      // board.print_status(current_color); /*  デバッグ用  */
+      board.print_status(current_color); /*  デバッグ用  */
     }
 
     current_color =
@@ -1603,7 +1604,7 @@ int main() {
   const int TILE_NUMBER = 14;
   const int MAX_TREE_DEPTH = 10;
   int iterations = 300;
-  int N = 100;
+  int N = 50;
   AIType p1_ai = AIType::MCTS_WIN;
   AIType p2_ai = AIType::RANDOM;
 
