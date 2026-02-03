@@ -1024,11 +1024,12 @@ pair<int, int> random_playout(Board board, Player player1, Player player2,
       BlockData data = getBlock(block_id);
       Block block(data);
 
-      cout << "Block id: " << block_id
-           << ", legal_moves size: " << legal_moves.size() << endl;
+      /*cout << "Block id: " << block_id
+           << ", legal_moves size: " << legal_moves.size() << endl;/* デバッグ用
+       */
       board.change_status(current_color, block, block_id, rot, x, y,
                           *current_player);
-      board.print_status(current_color); /*  デバッグ用  */
+      // board.print_status(current_color); /*  デバッグ用  */
     }
 
     current_color =
@@ -1424,13 +1425,13 @@ std::tuple<std::string, int, int, int> MCTS(Board root_board, Player root_p1,
 
   switch (phase) {
   case GamePhase::OPENING:
-    iterations = 1500;
+    iterations = 1000;
     break;
   case GamePhase::MIDDLE:
-    iterations = 700;
+    iterations = 1000;
     break;
   case GamePhase::ENDING:
-    iterations = 500;
+    iterations = 1000;
     break;
   }
 
