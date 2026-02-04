@@ -926,22 +926,22 @@ double evaluate(Board &board, Player &p1, Player &p2, Color turn,
 
   switch (phase) {
   case GamePhase::OPENING:
-    w_score = 0.7;
-    w_mymob = 0.1;
-    w_opmob = 0.2;
-    w_cant = 0.0;
-    break;
-  case GamePhase::MIDDLE:
-    w_score = 0.6;
-    w_mymob = 0.15;
-    w_opmob = 0.3;
-    w_cant = 0.0;
-    break;
-  case GamePhase::ENDING:
-    w_score = 0.9;
+    w_score = 0.0;
     w_mymob = 0.0;
     w_opmob = 0.0;
-    w_cant = 0.1;
+    w_cant = 1.0;
+    break;
+  case GamePhase::MIDDLE:
+    w_score = 0.0;
+    w_mymob = 0.00;
+    w_opmob = 0.0;
+    w_cant = 1.0;
+    break;
+  case GamePhase::ENDING:
+    w_score = 0.0;
+    w_mymob = 0.0;
+    w_opmob = 0.0;
+    w_cant = 1.0;
     break;
   }
 
@@ -961,8 +961,8 @@ double evaluate(Board &board, Player &p1, Player &p2, Color turn,
           cant++;
       }
     }
-    r = w_score * p1.score / score_lim - w_cant * cant / 194 +
-        w_mymob * mymob / 2000 - w_opmob * opmob / 2000;
+    r = 1 + (w_score * p1.score / score_lim) - (w_cant * cant / 194) +
+        (w_mymob * mymob / 2000) - (w_opmob * opmob / 2000);
   } else {
     int score_lim = score_limitter(p2);
     int col = static_cast<int>(Color::PLAYER2);
@@ -979,8 +979,8 @@ double evaluate(Board &board, Player &p1, Player &p2, Color turn,
           cant++;
       }
     }
-    r = w_score * p2.score / score_lim - w_cant * cant / 194 +
-        w_mymob * mymob / 2000 - w_opmob * opmob / 2000;
+    r = 1 + (w_score * p2.score / score_lim) - (w_cant * cant / 194) +
+        (w_mymob * mymob / 2000) - (w_opmob * opmob / 2000);
   }
   return r;
 }
@@ -1425,13 +1425,13 @@ std::tuple<std::string, int, int, int> MCTS(Board root_board, Player root_p1,
 
   switch (phase) {
   case GamePhase::OPENING:
-    iterations = 1000;
+    iterations = 1500;
     break;
   case GamePhase::MIDDLE:
-    iterations = 1000;
+    iterations = 700;
     break;
   case GamePhase::ENDING:
-    iterations = 1000;
+    iterations = 500;
     break;
   }
 
