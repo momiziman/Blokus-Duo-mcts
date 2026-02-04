@@ -575,9 +575,6 @@ public:
     vector<pair<int, int>> res;
     int col = static_cast<int>(color);
 
-    int H = block_shape.size();
-    int W = block_shape[0].size();
-
     std::set<pair<int, int>> candidates; // 重複防止
 
     // --- ABLESET を起点に候補座標を収集 ---
@@ -611,6 +608,69 @@ public:
     }
 
     return res;
+  }
+
+  vector<pair<int, int>> search_settable_position_one_ableset(
+      Color color, const vector<vector<int>> &block_shape, int ax, int ay) {
+
+    vector<pair<int, int>> res;
+    int col = static_cast<int>(color);
+
+    // ABLESET でなければ即終了
+    if (status[col][ay][ax] != ABLESET) {
+      cout << "Error:It's not ABLESET! (by search settable position one "
+              "ableset())"
+           << endl;
+      return res;
+    }
+
+    std::set<pair<int, int>> candidates; // 重複防止
+
+    // --- 周囲候補生成（5×5） ---
+    for (int dy = -2; dy <= 2; ++dy) {
+      for (int dx = -2; dx <= 2; ++dx) {
+        int ny = ay + dy;
+        int nx = ax + dx;
+
+        if (1 <= ny && ny <= TILE_NUMBER && 1 <= nx && nx <= TILE_NUMBER) {
+          candidates.insert({nx, ny});
+        }
+      }
+    }
+
+    // --- 実際に置けるかチェック ---
+    for (auto &[cx, cy] : candidates) {
+      if (status[col][cy][cx] != CANTSET &&
+          settable_check(color, block_shape, cx, cy)) {
+        res.emplace_back(cx, cy);
+      }
+    }
+
+    return res;
+  }
+
+  std::optional<std::pair<int, int>>
+  select_random_settable_position(Color color) {
+    vector<pair<int, int>> candidates;
+    int col = static_cast<int>(color);
+
+    // --- ABLESET を起点に候補座標を収集 ---
+    for (int y = 1; y <= TILE_NUMBER; ++y) {
+      for (int x = 1; x <= TILE_NUMBER; ++x) {
+        if (status[col][y][x] == ABLESET) {
+          candidates.emplace_back(x, y);
+        }
+      }
+    }
+    // 候補なし
+    if (candidates.empty()) {
+      cout << "No one ABLESET." << endl;
+      return std::nullopt;
+    }
+    // --- ランダムに1つ選択 ---
+    static thread_local std::mt19937 gen(std::random_device{}());
+    std::uniform_int_distribution<> dist(0, candidates.size() - 1);
+    return candidates[dist(gen)];
   }
 
   // Boardクラス内
@@ -842,6 +902,108 @@ get_fast_legal_moves(Board &board, Color color, Player &player, int max_moves) {
   return moves;
 }
 
+vector<tuple<string, int, int, int>>
+get_one_legal_moves(Board &board, Color color, Player &player, int max_moves) {
+
+  vector<tuple<string, int, int, int>> moves;
+
+  // --- 未使用ブロック列挙 ---
+  vector<string> unused_blocks;
+  for (auto &[id, _] : block_table) {
+    if (find(player.used_blocks.begin(), player.used_blocks.end(), id) ==
+        player.used_blocks.end()) {
+      unused_blocks.push_back(id);
+    }
+  }
+
+  if (unused_blocks.empty())
+    return moves;
+
+  static thread_local mt19937 gen(random_device{}());
+
+  // 未使用ブロックの探索順をランダム化
+  shuffle(unused_blocks.begin(), unused_blocks.end(), gen);
+  // --- 全未使用ブロックに対して探索 ---
+  for (const auto &block_id : unused_blocks) {
+
+    BlockData data = getBlock(block_id);
+    Block base(data);
+
+    // --- 回転・反転 ---
+    for (int rot = 0; rot < 8; ++rot) {
+      Block tmp = base;
+      tmp.rotate_block(rot);
+
+      auto positions =
+          board.search_settable_position_near_ableset(color, tmp.shape);
+
+      for (auto &[x, y] : positions) {
+        moves.emplace_back(block_id, x, y, rot);
+
+        if ((int)moves.size() >= max_moves) {
+          shuffle(moves.begin(), moves.end(), gen);
+          return moves;
+        }
+      }
+    }
+  }
+
+  // --- 合法手が複数ある場合はランダム化 ---
+  shuffle(moves.begin(), moves.end(), gen);
+
+  return moves;
+}
+
+vector<tuple<string, int, int, int>>
+get_oneable_legal_moves(Board &board, Color color, Player &player) {
+
+  vector<tuple<string, int, int, int>> moves;
+
+  // --- 未使用ブロック列挙 ---
+  vector<string> unused_blocks;
+  for (auto &[id, _] : block_table) {
+    if (find(player.used_blocks.begin(), player.used_blocks.end(), id) ==
+        player.used_blocks.end()) {
+      unused_blocks.push_back(id);
+    }
+  }
+
+  if (unused_blocks.empty())
+    return moves;
+
+  static thread_local mt19937 gen(random_device{}());
+
+  // 未使用ブロックの探索順をランダム化
+  shuffle(unused_blocks.begin(), unused_blocks.end(), gen);
+
+  string block_id = unused_blocks[0]; // 最初のブロックのみ使用
+  BlockData data = getBlock(block_id);
+  Block base(data);
+  int ax = -1;
+  int ay = -1;
+  // ① ABLESET をランダムに1つ選ぶ
+  auto a = board.select_random_settable_position(color);
+  if (a != nullopt) {
+    auto [ax, ay] = a.value();
+  }
+
+  if (ax > 0 || ay > 0) {
+    // --- 回転・反転 ---
+    for (int rot = 0; rot < 8; ++rot) {
+      Block tmp = base;
+      tmp.rotate_block(rot);
+
+      auto positions =
+          board.search_settable_position_one_ableset(color, tmp.shape, ax, ay);
+
+      for (auto &[x, y] : positions) {
+        moves.emplace_back(block_id, x, y, rot);
+      }
+    }
+  }
+  return moves;
+}
+
 // Player クラスの used_blocks を考慮して合法手リストを取得（x,yを除く）
 vector<pair<string, int>>
 get_legal_moves_no_pos(Board &board, Color player_color, Player &player) {
@@ -991,8 +1153,6 @@ pair<int, int> random_playout(Board board, Player player1, Player player2,
   // board.print_status(Color::PLAYER1); /*  デバッグ用  */
 
   Color current_color = turn;
-  current_color =
-      (current_color == Color::PLAYER1) ? Color::PLAYER1 : Color::PLAYER2;
 
   static thread_local std::mt19937 gen((std::random_device())());
 
@@ -1001,19 +1161,31 @@ pair<int, int> random_playout(Board board, Player player1, Player player2,
         (current_color == Color::PLAYER1) ? &player1 : &player2;
 
     auto legal_moves =
-        get_fast_legal_moves(board, current_color, *current_player, 300);
+        get_oneable_legal_moves(board, current_color, *current_player);
 
     if (legal_moves.empty()) {
-      if (legal_moves.empty()) {
-        current_color =
-            (current_color == Color::PLAYER1) ? Color::PLAYER2 : Color::PLAYER1;
-        Player *current_player =
-            (current_color == Color::PLAYER1) ? &player1 : &player2;
-        if (get_fast_legal_moves(board, current_color, *current_player, 1)
-                .empty()) {
-          break;
-        } else {
+      auto my = get_one_legal_moves(board, Color::PLAYER1, player1, 1);
+      auto op = get_one_legal_moves(board, Color::PLAYER2, player2, 1);
+      if (my.empty() && op.empty()) {
+        break;
+      } else {
+        legal_moves =
+            get_one_legal_moves(board, current_color, *current_player, 100);
+        if (legal_moves.empty()) {
+          current_color = (current_color == Color::PLAYER1) ? Color::PLAYER2
+                                                            : Color::PLAYER1;
           continue;
+        } else {
+          std::uniform_int_distribution<> dis(0, (int)legal_moves.size() - 1);
+          int idx = dis(gen);
+
+          auto [block_id, x, y, rot] = legal_moves[idx];
+          BlockData data = getBlock(block_id);
+          Block block(data);
+
+          board.change_status(current_color, block, block_id, rot, x, y,
+                              *current_player);
+          board.print_status(current_color); /*  デバッグ用  */
         }
       }
     } else {
@@ -1029,7 +1201,7 @@ pair<int, int> random_playout(Board board, Player player1, Player player2,
        */
       board.change_status(current_color, block, block_id, rot, x, y,
                           *current_player);
-      // board.print_status(current_color); /*  デバッグ用  */
+      board.print_status(current_color); /*  デバッグ用  */
     }
 
     current_color =
