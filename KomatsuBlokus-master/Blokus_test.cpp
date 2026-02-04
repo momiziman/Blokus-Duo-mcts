@@ -1095,7 +1095,7 @@ double evaluate(Board &board, Player &p1, Player &p2, Color turn,
     break;
   case GamePhase::MIDDLE:
     w_score = 0.0;
-    w_mymob = 0.00;
+    w_mymob = 0.0;
     w_opmob = 0.0;
     w_cant = 1.0;
     break;
@@ -1185,7 +1185,7 @@ pair<int, int> random_playout(Board board, Player player1, Player player2,
 
           board.change_status(current_color, block, block_id, rot, x, y,
                               *current_player);
-          board.print_status(current_color); /*  デバッグ用  */
+          // board.print_status(current_color); /*  デバッグ用  */
         }
       }
     } else {
@@ -1201,7 +1201,7 @@ pair<int, int> random_playout(Board board, Player player1, Player player2,
        */
       board.change_status(current_color, block, block_id, rot, x, y,
                           *current_player);
-      board.print_status(current_color); /*  デバッグ用  */
+      // board.print_status(current_color); /*  デバッグ用  */
     }
 
     current_color =
@@ -1231,14 +1231,33 @@ double heuristic_playout(Board board, Player p1, Player p2, Color turn) {
 
     Player *cur = (turn == Color::PLAYER1) ? &p1 : &p2;
 
-    auto moves = get_fast_legal_moves(board, turn, *cur, 300);
+    auto moves = get_oneable_legal_moves(board, turn, *cur);
     if (moves.empty()) {
-      turn = (turn == Color::PLAYER1) ? Color::PLAYER2 : Color::PLAYER1;
-      Player *cur = (turn == Color::PLAYER1) ? &p1 : &p2;
-      if (get_fast_legal_moves(board, turn, *cur, 1).empty()) {
+      auto my = get_one_legal_moves(board, Color::PLAYER1, p1, 1);
+      auto op = get_one_legal_moves(board, Color::PLAYER2, p2, 1);
+      if (my.empty() && op.empty()) {
         break;
       } else {
-        continue;
+        moves = get_one_legal_moves(board, turn, *cur, 100);
+        if (moves.empty()) {
+          turn = (turn == Color::PLAYER1) ? Color::PLAYER2 : Color::PLAYER1;
+          continue;
+        } else {
+          static thread_local std::mt19937 gen((std::random_device())());
+          std::uniform_int_distribution<> dis(0, (int)moves.size() - 1);
+          int idx = dis(gen);
+
+          auto [block_id, x, y, rot] = moves[idx];
+          BlockData data = getBlock(block_id);
+          Block block(data);
+          board.change_status(turn, block, block_id, rot, x, y, *cur);
+          /*cout << "Playout Step " << depth + 1 << ": "
+                 << ((turn == Color::PLAYER1) ? "P1" : "P2") << " plays block "
+                 << block_id << " at (" << x << "," << y << ") rot=" << rot <<
+            "\n"; board.print_status(turn); /*  デバッグ用  */
+
+          turn = (turn == Color::PLAYER1) ? Color::PLAYER2 : Color::PLAYER1;
+        }
       }
     }
 
@@ -1298,6 +1317,12 @@ struct MCTSNode {
     double best_value = -1e18;
     MCTSNode *best = nullptr;
 
+    for (auto child : children) {
+      // 未訪問ノードは優先的に選ぶ
+      if (child->visit_count == 0) {
+        return child;
+      }
+    }
     for (auto child : children) {
       double ucb = (child->win_score / (child->visit_count + 1e-6)) +
                    C * std::sqrt(std::log(visit_count + 1) /
@@ -1458,9 +1483,9 @@ struct MCTSNode {
       node->visit_count++;
 
       if (node->current_player == root_player) {
-        node->win_score += result;
-      } else {
         node->win_score -= result;
+      } else {
+        node->win_score += result;
       }
       /*if (node->depth != 0) {
         cout << "Backpropagate Node Depth " << node->depth << ": Player "
@@ -1597,13 +1622,13 @@ std::tuple<std::string, int, int, int> MCTS(Board root_board, Player root_p1,
 
   switch (phase) {
   case GamePhase::OPENING:
-    iterations = 1500;
+    iterations = 100;
     break;
   case GamePhase::MIDDLE:
-    iterations = 700;
+    iterations = 100;
     break;
   case GamePhase::ENDING:
-    iterations = 500;
+    iterations = 100;
     break;
   }
 
