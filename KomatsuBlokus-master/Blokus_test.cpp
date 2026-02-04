@@ -1444,7 +1444,7 @@ struct MCTSNode {
         cout << "Step " << step + 1 << ": "
              << ((turn == Color::PLAYER1) ? "P1" : "P2") << " plays block "
              << id << " at (" << x << "," << y << ") rot=" << rot << "\n";
-        board.print_status(turn);
+        // board.print_status(turn);
       }
 
       turn = (turn == Color::PLAYER1) ? Color::PLAYER2 : Color::PLAYER1;
@@ -1765,11 +1765,11 @@ GameResult play_game(Board board, Player p1, Player p2, Color start_turn,
         if (turn == Color::PLAYER1) {
           cout << "Turn" << p1.turn_num << "- PLAYER1 placed block " << block_id
                << " at (" << x << "," << y << ") with rotation " << rot << "\n";
-          board.print_status(turn);
+          // board.print_status(turn);
         } else {
           cout << "Turn" << p2.turn_num << "- PLAYER2 placed block " << block_id
                << " at (" << x << "," << y << ") with rotation " << rot << "\n";
-          board.print_status(turn);
+          // board.print_status(turn);
         }
       }
     }
@@ -1778,12 +1778,14 @@ GameResult play_game(Board board, Player p1, Player p2, Color start_turn,
   }
 
   if (p1.score > p2.score) {
+    board.print_status(Color::PLAYER1);
     cout << "Final Score - P1: " << p1.score << ", P2: " << p2.score << "\n";
     cout << "P1 is WIN!"
          << "\n";
     return GameResult::P1_WIN;
   }
   if (p2.score > p1.score) {
+    board.print_status(Color::PLAYER2);
     cout << "Final Score - P1: " << p1.score << ", P2: " << p2.score << "\n";
     cout << "P2 is WIN!"
          << "\n";
