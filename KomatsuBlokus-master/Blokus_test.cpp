@@ -1088,22 +1088,22 @@ double evaluate(Board &board, Player &p1, Player &p2, Color turn,
 
   switch (phase) {
   case GamePhase::OPENING:
-    w_score = 0.0;
+    w_score = 1.0;
     w_mymob = 0.0;
     w_opmob = 0.0;
-    w_cant = 1.0;
+    w_cant = 0.0;
     break;
   case GamePhase::MIDDLE:
-    w_score = 0.0;
+    w_score = 1.0;
     w_mymob = 0.0;
     w_opmob = 0.0;
-    w_cant = 1.0;
+    w_cant = 0.0;
     break;
   case GamePhase::ENDING:
-    w_score = 0.0;
+    w_score = 1.0;
     w_mymob = 0.0;
     w_opmob = 0.0;
-    w_cant = 1.0;
+    w_cant = 0.0;
     break;
   }
 
@@ -1123,7 +1123,7 @@ double evaluate(Board &board, Player &p1, Player &p2, Color turn,
           cant++;
       }
     }
-    r = 1 + (w_score * p1.score / score_lim) - (w_cant * cant / 194) +
+    r = (w_score * p1.score / score_lim) - (w_cant * cant / 194) +
         (w_mymob * mymob / 2000) - (w_opmob * opmob / 2000);
   } else {
     int score_lim = score_limitter(p2);
@@ -1141,7 +1141,7 @@ double evaluate(Board &board, Player &p1, Player &p2, Color turn,
           cant++;
       }
     }
-    r = 1 + (w_score * p2.score / score_lim) - (w_cant * cant / 194) +
+    r = (w_score * p2.score / score_lim) - (w_cant * cant / 194) +
         (w_mymob * mymob / 2000) - (w_opmob * opmob / 2000);
   }
   return r;
@@ -1488,13 +1488,14 @@ struct MCTSNode {
         node->win_score += result;
       }
       /*if (node->depth != 0) {
-        cout << "Backpropagate Node Depth " << node->depth << ": Player "
-             << color_to_string(node->current_player) << ": Move "
-             << node->move_block_id << " (" << node->move_x << ","
-             << node->move_y << ") rot=" << node->move_rot
-             << ": visit_count=" << node->visit_count
-             << ", win_score=" << node->win_score << "\n";
-      } /* デバッグ用 */
+      cout << "Backpropagate Node Depth " << node->depth << ": Player "
+           << color_to_string(node->current_player) << ": Move "
+           << node->move_block_id << " (" << node->move_x << "," << node->move_y
+           << ") rot=" << node->move_rot
+           << ": visit_count=" << node->visit_count
+           << ", win_score=" << node->win_score << "\n";
+      node->board.print_status(node->current_player);
+    } /* デバッグ用 */
 
       node = node->parent;
     }
@@ -1622,13 +1623,13 @@ std::tuple<std::string, int, int, int> MCTS(Board root_board, Player root_p1,
 
   switch (phase) {
   case GamePhase::OPENING:
-    iterations = 100;
+    iterations = 1500;
     break;
   case GamePhase::MIDDLE:
-    iterations = 100;
+    iterations = 700;
     break;
   case GamePhase::ENDING:
-    iterations = 100;
+    iterations = 500;
     break;
   }
 
@@ -1653,7 +1654,8 @@ std::tuple<std::string, int, int, int> MCTS(Board root_board, Player root_p1,
 
     // cout << "[MCTS] Expansion phase.\n";
     // 2. Expansion
-    if (node->depth < MAX_TREE_DEPTH && !node->untried_moves.empty()) {
+    if (node->depth < MAX_TREE_DEPTH && !node->untried_moves.empty() &&
+        node->visit_count > 5) {
       node = node->expand_node();
     }
 
@@ -1805,7 +1807,7 @@ int main() {
   const int MAX_TREE_DEPTH = 10;
   int iterations = 300;
   int N = 50;
-  AIType p1_ai = AIType::MCTS_WIN;
+  AIType p1_ai = AIType::MCTS_EVAL;
   AIType p2_ai = AIType::RANDOM;
 
   init_block_ids_by_size();
